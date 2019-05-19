@@ -114,4 +114,7 @@ public:
 	// Helper Methods
 	BOOL	  CheckSpriteCollision(Sprite* _testSprite);
 	BOOL	  CheckMoveCollision(Sprite* _testSprite);
+
+
+	vector<Sprite*> GetSprites() { return sprites; };
 };

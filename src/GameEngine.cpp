@@ -409,7 +409,7 @@ BOOL GameEngine::CheckMoveCollision(Sprite* _testSprite)
 			continue;
 
 		// Test the collision
-		if ((*siSprite)->GetSpriteType() == ST_OBSTACLE && _testSprite->TestCollision(*siSprite))
+		if (((*siSprite)->GetSpriteType() == ST_WALL || (*siSprite)->GetSpriteType() == ST_BASE) && _testSprite->TestCollision(*siSprite))
 			// Collision detected
 			return SpriteCollision((*siSprite), _testSprite);
 	}

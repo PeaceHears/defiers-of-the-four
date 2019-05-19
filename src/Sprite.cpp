@@ -63,6 +63,8 @@ Sprite::Sprite(Bitmap* _bitmap, POINT _position, POINT _velocity, int _zOrder,
 	CopyRect(&bounds, &_bounds);
 	boundsAction = _boundsAction;
 	isHidden = FALSE;
+	isDying = FALSE;
+	isOneCycle = FALSE;
 }
 
 Sprite::~Sprite() {
@@ -175,10 +177,10 @@ void Sprite::Draw(HDC _hDC) {
 	{
 		// Draw the appropriate frame, if necessary
 		if (numFrames == 1) {
-			bitmap->Draw(_hDC, collisionRect.left, collisionRect.top, TRUE);
+			bitmap->Draw(_hDC, position.left, position.top, TRUE);
 		}
 		else {
-			bitmap->DrawPart(_hDC, collisionRect.left, collisionRect.top,
+			bitmap->DrawPart(_hDC, position.left, position.top,
 				curFrame * GetWidth(), 0, GetWidth(), GetHeight(), TRUE);
 		}
 	}

@@ -51,6 +51,15 @@
     <ClInclude Include="DemonBase.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="WololoRobot.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="WallSprite.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="R_Captain.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -81,6 +90,15 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="DemonBase.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="WololoRobot.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="WallSprite.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="R_Captain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -114,12 +132,45 @@
     <Image Include="Resources\Bitmaps\sheep.bmp">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="resources\bitmaps\bitmap1.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Resources\Bitmaps\bulletdemon.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Resources\Menu\menu_robot.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Resources\Bitmaps\monster.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Resources\Bitmaps\wall.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Resources\Bitmaps\enemybase.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Resources\Bitmaps\bullet.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Resources\Bitmaps\demon.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <Media Include="Resources\Sounds\menu_click.wav">
       <Filter>Resource Files</Filter>
     </Media>
     <Media Include="Resources\Sounds\menu_click_back.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="Resources\Sounds\menu_select.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="Resources\Sounds\robot_fire.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="Resources\Sounds\gun_shot.wav">
       <Filter>Resource Files</Filter>
     </Media>
   </ItemGroup>

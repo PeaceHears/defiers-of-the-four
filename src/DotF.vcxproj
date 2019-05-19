@@ -158,9 +158,12 @@
     <ClInclude Include="GameEngine.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="Robot.h" />
+    <ClInclude Include="R_Captain.h" />
     <ClInclude Include="Sprite.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="WallSprite.h" />
+    <ClInclude Include="WololoRobot.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Bitmap.cpp" />
@@ -171,6 +174,7 @@
     <ClCompile Include="DotF.cpp" />
     <ClCompile Include="GameEngine.cpp" />
     <ClCompile Include="Robot.cpp" />
+    <ClCompile Include="R_Captain.cpp" />
     <ClCompile Include="Sprite.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -178,23 +182,36 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="WallSprite.cpp" />
+    <ClCompile Include="WololoRobot.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="DotF.rc" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="DotF.ico" />
+    <Image Include="resources\bitmaps\bitmap1.bmp" />
+    <Image Include="Resources\Bitmaps\bullet.bmp" />
+    <Image Include="Resources\Bitmaps\bulletdemon.bmp" />
+    <Image Include="Resources\Bitmaps\demon.bmp" />
+    <Image Include="Resources\Bitmaps\enemybase.bmp" />
+    <Image Include="Resources\Bitmaps\monster.bmp" />
     <Image Include="Resources\Bitmaps\sheep.bmp" />
+    <Image Include="Resources\Bitmaps\wall.bmp" />
     <Image Include="Resources\Icons\Dotf.ico" />
     <Image Include="Resources\Icons\Dotf_sm.ico" />
     <Image Include="resources\menu\bitmap1.bmp" />
+    <Image Include="Resources\Menu\menu_robot.bmp" />
     <Image Include="Resources\Menu\menu_star.bmp" />
     <Image Include="Resources\Menu\menu_title.bmp" />
     <Image Include="small.ico" />
   </ItemGroup>
   <ItemGroup>
+    <Media Include="Resources\Sounds\gun_shot.wav" />
     <Media Include="Resources\Sounds\menu_click.wav" />
     <Media Include="Resources\Sounds\menu_click_back.wav" />
+    <Media Include="Resources\Sounds\menu_select.wav" />
+    <Media Include="Resources\Sounds\robot_fire.wav" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
