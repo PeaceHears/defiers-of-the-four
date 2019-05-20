@@ -20,14 +20,7 @@ using namespace std;
 #define DEMON_H
 #endif
 
-class Demon;
-
-//-----------------------------------------------------------------
-// Custom Data Types
-//-----------------------------------------------------------------
-/*
-int x_bound_of_view_field = 6;
-int y_bound_of_view_field = 6;*/
+class Demon; // reference
 
 //-----------------------------------------------------------------
 // DemonBase Class
@@ -42,6 +35,7 @@ protected:
 	vector<Robot*> currentTargets;
 	vector<Demon*> currentDemons;
 	int spawnLimit = 3;
+
 public:
 	// Constructor(s)/Destructor
 	DemonBase(POINT _mapPosition, int _base_number, Sprite* _demonBaseSprite);
