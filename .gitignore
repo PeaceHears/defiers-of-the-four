@@ -36,3 +36,5 @@ src/x64
 *.exe
 *.out
 *.app
+
+*x64
