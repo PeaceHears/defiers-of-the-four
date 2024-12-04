@@ -38,3 +38,5 @@ src/x64
 *.app
 
 *x64
+*libs
+*.vs
