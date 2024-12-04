@@ -40,3 +40,4 @@ src/x64
 *x64
 *libs
 *.vs
+*Debug
