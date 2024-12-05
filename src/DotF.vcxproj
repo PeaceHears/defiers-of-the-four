@@ -168,6 +168,7 @@
     <ClInclude Include="DemonBoss1.h" />
     <ClInclude Include="DotF.h" />
     <ClInclude Include="GameEngine.h" />
+    <ClInclude Include="Globals.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="Robot.h" />
     <ClInclude Include="R_Captain.h" />

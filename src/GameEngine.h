@@ -16,6 +16,11 @@ using namespace std;
 #include "Sprite.h"
 
 //-----------------------------------------------------------------
+// Forward Declarations
+//-----------------------------------------------------------------
+class GameClient;
+
+//-----------------------------------------------------------------
 // Joystick Flags
 //-----------------------------------------------------------------
 typedef WORD    JOYSTATE;
@@ -37,7 +42,7 @@ LRESULT CALLBACK  WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 //-----------------------------------------------------------------
 // Game Engine Function Declarations
 //-----------------------------------------------------------------
-BOOL GameInitialize(HINSTANCE hInstance);
+BOOL GameInitialize(HINSTANCE hInstance, const string& ipAddress);
 void GameStart(HWND hWindow);
 void GameEnd();
 void GameActivate(HWND hWindow);
@@ -71,6 +76,7 @@ protected:
 	RECT                joystickTrip;
 	vector<Sprite*>     sprites;
 	UINT                midiPlayerID;
+	GameClient* client = nullptr;
 
 public:
 	// Constructor(s)/Destructor
@@ -111,6 +117,9 @@ public:
 	void      SetFrameRate(int _frameRate) { frameDelay = 1000 / _frameRate; };
 	BOOL      GetSleep() { return sleep; };
 	void      SetSleep(BOOL _sleep) { sleep = _sleep; };
+	GameClient& GetClient() { return *client; }
+	void SetClient(GameClient& _client) { client = &_client; }
+
 	// Helper Methods
 	BOOL	  CheckSpriteCollision(Sprite* _testSprite);
 	BOOL	  CheckMoveCollision(Sprite* _testSprite);

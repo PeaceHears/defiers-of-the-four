@@ -2,9 +2,9 @@
 #include <iostream>
 
 // Constructor: Initializes the server with the specified port
-GameServer::GameServer(unsigned short port) : port(port)
+GameServer::GameServer(unsigned short port) : port(port) 
 {
-    if (socket.bind(port) != sf::Socket::Done)
+    if (socket.bind(port) != sf::Socket::Done) 
     {
         throw std::runtime_error("Failed to bind server to port " + std::to_string(port));
     }
@@ -20,9 +20,9 @@ GameServer::GameServer(unsigned short port) : port(port)
 }
 
 // Main server loop
-void GameServer::run()
+void GameServer::run() 
 {
-    while (true)
+    while (true) 
     {
         // Handle incoming packets
         sf::Packet packet;
@@ -36,50 +36,54 @@ void GameServer::run()
 
         // Broadcast the updated game state to all clients
         broadcastGameState();
+
+        // Avoid busy-waiting
+        sf::sleep(sf::milliseconds(16)); // ~60 FPS
     }
 }
 
 // Handle input from a specific client
-void GameServer::handleClientInput(sf::Packet& packet, sf::IpAddress sender, unsigned short port)
+void GameServer::handleClientInput(sf::Packet& packet, sf::IpAddress sender, unsigned short senderPort) 
 {
     PlayerState state;
 
     if (packet >> state)
     {
         // Update the player's state based on their input
-        PlayerState& state = players[sender];
+        players[{sender, senderPort}] = state;
 
-        std::cout << "Received input from " << sender << ":" << port
-            << " -> Position: (" << state.position.x << ", " << state.position.y;
+        std::cout << "Received input from " << sender << ":" << senderPort
+            << " -> Position: (" << state.position.x << ", " << state.position.y 
+            << " -> Ally Position: (" << state.allyPosition.x << ", " << state.allyPosition.y  << std::endl;
     }
-    else
+    else 
     {
-        std::cerr << "Failed to parse input from " << sender << ":" << port << std::endl;
+        std::cerr << "Failed to parse input from " << sender << ":" << senderPort << std::endl;
     }
 }
 
 // Broadcast the game state to all connected clients
-void GameServer::broadcastGameState()
+void GameServer::broadcastGameState() 
 {
-    sf::Packet statePacket;
-
-    // Pack the state of all players
-    for (const auto& player : players)
+    for (const auto& player : players) 
     {
-        const auto& ip = player.first;
-        const auto& state = player.second;
+        const auto& client = player.first;
 
-        statePacket << ip.toString() << state;
-    }
+        sf::Packet statePacket;
 
-    // Send the state packet to all connected clients
-    for (const auto& player : players)
-    {
-        const auto& ip = player.first;
-
-        if (socket.send(statePacket, ip, port) != sf::Socket::Done)
+        // Pack the state of all players
+        for (const auto& player : players) 
         {
-            std::cerr << "Failed to send state to " << ip << std::endl;
+            const auto& otherClient = player.first;
+            const auto& otherState = player.second;
+
+            statePacket << otherClient.first.toString() << otherState;
+        }
+
+        // Send the state packet to the specific client
+        if (socket.send(statePacket, client.first, client.second) != sf::Socket::Done) 
+        {
+            std::cerr << "Failed to send state to " << client.first << ":" << client.second << std::endl;
         }
     }
 }

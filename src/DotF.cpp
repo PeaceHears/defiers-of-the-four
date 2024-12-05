@@ -8,6 +8,9 @@
 //-----------------------------------------------------------------
 #include "DotF.h"
 
+#include "client.h"
+#include <iostream>
+
 #define ALLY_BULLET_DAMAGE 10
 #define ENEMY_BULLET_DAMAGE 15
 #define FIRE_RANGE 4
@@ -19,8 +22,10 @@
 //-----------------------------------------------------------------
 // Game Engine Functions
 //-----------------------------------------------------------------
-BOOL GameInitialize(HINSTANCE _hInstance)
+BOOL GameInitialize(HINSTANCE _hInstance, const string& ipAddress)
 {
+	serverIPAddress = ipAddress;
+
 	// Create the game engine
 	game = new GameEngine(_hInstance, (LPTSTR)TEXT("Defiers of the Four"),
 		(LPTSTR)TEXT("Defiers of the Four"), (WORD)IDI_DOTF, (WORD)IDI_DOTF_SM, 1200, 768);
@@ -142,6 +147,16 @@ void GamePaint(HDC _hDC)
 			btnReady->Draw(_hDC);
 		}
 		break;
+	case MATCHMAKING:
+		bmMenuBackground->Draw(_hDC, 0, 0);
+
+		game->PrintText(_hDC, (LPTSTR)TEXT("MATCHMAKING \n Your server IP:\n"), 64, { 0, 150, RES_W, 300 });
+		game->PrintText(_hDC, ConvertString(serverIPAddress), 64, { 0, 300, RES_W, 450 });
+
+		btnBackToPlayers->Draw(_hDC);
+		btnStart->Draw(_hDC);
+
+		break;
 	case GAME_PLAY:
 	{
 		bmMenuBackground->Draw(_hDC, 0, 0);
@@ -200,10 +215,13 @@ void GameCycle()
 	// Update the sprites
 	game->UpdateSprites();
 
-	if (currentScene == GAME_PLAY) {
+	if (currentScene == GAME_PLAY) 
+	{
 		UpdateCharacters();	
 		UpdateBases();
 		UpdateObstacles();
+
+		UpdateClientData();
 	}
 
 	// Obtain a device context for repainting the game
@@ -417,7 +435,8 @@ void MouseButtonDown(int _x, int _y, BOOL _isLeftClick)
 void MouseButtonUp(int _x, int _y, BOOL _isLeftClick)
 {
 	if (_isLeftClick) {
-		if (currentScene == MENU_MAIN || currentScene == MENU_SELECT_PLAYERS || currentScene == MENU_SELECT_ROBOTS) {
+		if (currentScene == MENU_MAIN || currentScene == MENU_SELECT_PLAYERS || 
+			currentScene == MENU_SELECT_ROBOTS || currentScene == MATCHMAKING) {
 			HandleMenuButtonClick(_x, _y);
 		}
 
@@ -426,7 +445,8 @@ void MouseButtonUp(int _x, int _y, BOOL _isLeftClick)
 
 void MouseMove(int _x, int _y)
 {
-	if (currentScene == MENU_MAIN || currentScene == MENU_SELECT_PLAYERS || currentScene == MENU_SELECT_ROBOTS) {
+	if (currentScene == MENU_MAIN || currentScene == MENU_SELECT_PLAYERS || 
+		currentScene == MENU_SELECT_ROBOTS || currentScene == MATCHMAKING) {
 		// Hover effect for menu
 		HandleMenuButtonHover(_x, _y);
 	}
@@ -719,6 +739,25 @@ void UpdateBases() {
 // Update obstacles
 void UpdateObstacles() {
 
+}
+
+void UpdateClientData()
+{
+	for (const auto& inGameRobot : inGameRobots) 
+	{
+		const auto& pos = ScreenRectToArrayPoint(inGameRobot->GetSprite()->GetPosition());
+
+		if (inGameRobot->IsRobot())
+		{
+			inGameData.allyPosition = pos;
+		}
+		else
+		{
+			inGameData.playerPosition = pos;
+		}
+
+		game->GetClient().setInGameData(inGameData);
+	}
 }
 
 // Creates all robots in the game at the start.
@@ -1731,6 +1770,11 @@ void CreateButtons(HDC _hDC)
 	menuRobotsButtons.push_back(btnReady);
 	btnBackToPlayers = new Button(_hDC, (LPTSTR)TEXT("Back"), (RES_W / 2) - (BTN_WIDTH / 2), 700);
 	menuRobotsButtons.push_back(btnBackToPlayers);
+
+	btnStart = new Button(_hDC, (LPTSTR)TEXT("Start"), (RES_W / 2) - (BTN_WIDTH / 2), 650);
+	menuMatchmakingButtons.push_back(btnStart);
+	btnBackToPlayers2 = new Button(_hDC, (LPTSTR)TEXT("Back"), (RES_W / 2) - (BTN_WIDTH / 2), 700);
+	menuMatchmakingButtons.push_back(btnBackToPlayers2);
 }
 
 //-----------------------------------------------------------------
@@ -1781,9 +1825,10 @@ void HandleMenuButtonClick(int _x, int _y)
 	case MENU_SELECT_ROBOTS:
 		// Button click - Ready
 		if (btnReady->GetSprite()->IsPointInside(_x, _y) && playerCount * 2 == selectedRobotIndexes.size()) {
-			InitializeGameWorld();
+			//InitializeGameWorld();
 			PlaySound((LPCWSTR)IDW_MENU_CLICK, hInstance, SND_ASYNC | SND_RESOURCE);
-			currentScene = GAME_PLAY;
+			//currentScene = GAME_PLAY;
+			currentScene = MATCHMAKING;
 		}
 
 		// Button click - Back
@@ -1807,6 +1852,19 @@ void HandleMenuButtonClick(int _x, int _y)
 				}
 			}
 			i++;
+		}
+		break;
+	case MATCHMAKING:
+		// Button click - Start
+		if (btnStart->GetSprite()->IsPointInside(_x, _y)) {
+			InitializeGameWorld();
+			PlaySound((LPCWSTR)IDW_MENU_CLICK, hInstance, SND_ASYNC | SND_RESOURCE);
+			currentScene = GAME_PLAY;
+		}
+
+		if (btnBackToPlayers2->GetSprite()->IsPointInside(_x, _y)) {
+			PlaySound((LPCWSTR)IDW_MENU_CLICK_BACK, hInstance, SND_ASYNC | SND_RESOURCE);
+			currentScene = MENU_SELECT_PLAYERS;
 		}
 		break;
 	default:
@@ -1858,6 +1916,17 @@ void HandleMenuButtonHover(int _x, int _y)
 			}
 			else {
 				Robot->SetMenuHover(false);
+			}
+		}
+		break;
+	case MATCHMAKING:
+		for (auto& Button : menuMatchmakingButtons)
+		{
+			if (Button->GetSprite()->IsPointInside(_x, _y)) {
+				Button->SetHover(true);
+			}
+			else {
+				Button->SetHover(false);
 			}
 		}
 		break;

@@ -8,6 +8,10 @@
 //-----------------------------------------------------------------
 #include "GameEngine.h"
 
+#include <iostream>
+#include <thread>
+#include "client.h"
+
 //-----------------------------------------------------------------
 // Static Variable Initialization
 //-----------------------------------------------------------------
@@ -19,12 +23,32 @@ GameEngine *GameEngine::gameEngine = NULL;
 int WINAPI WinMain(HINSTANCE _hInstance, HINSTANCE _hPrevInstance,
 	PSTR _cmdLine, int _cmdShow)
 {
+	AllocConsole();
+	FILE* file;
+	freopen_s(&file, "CONOUT$", "w", stdout); // Redirect stdout to the console
+	freopen_s(&file, "CONIN$", "r", stdin);  // Redirect stdin to the console
+
+	std::cout << "Console is open for debugging!\n";
+
+	std::string serverIp;
+	std::cout << "Enter server IP: ";
+	std::cin >> serverIp;
+
 	MSG         msg;
 	static int  tickTrigger = 0;
 	int         tickCount;
-
-	if (GameInitialize(_hInstance))
+	
+	if (GameInitialize(_hInstance, serverIp))
 	{
+		GameClient* client = new GameClient(serverIp, 53000);
+		GameEngine::GetEngine()->SetClient(*client);
+
+		// Launch client in a separate thread
+		std::thread clientThread([&client]()
+		{
+			client->run();
+		});
+
 		// Initialize the game engine
 		if (!GameEngine::GetEngine()->Initialize(_cmdShow))
 			return FALSE;
@@ -49,8 +73,7 @@ int WINAPI WinMain(HINSTANCE _hInstance, HINSTANCE _hPrevInstance,
 					tickCount = GetTickCount();
 					if (tickCount > tickTrigger)
 					{
-						tickTrigger = tickCount +
-							GameEngine::GetEngine()->GetFrameDelay();
+						tickTrigger = tickCount + GameEngine::GetEngine()->GetFrameDelay();
 						HandleKeys();
 						GameEngine::GetEngine()->CheckJoystick();
 						GameCycle();
@@ -58,11 +81,18 @@ int WINAPI WinMain(HINSTANCE _hInstance, HINSTANCE _hPrevInstance,
 				}
 			}
 		}
+
+		//client->stop();
+		clientThread.join();
+
 		return (int)msg.wParam;
 	}
 
 	// End the game
 	GameEnd();
+
+	fclose(file);
+	FreeConsole(); // Free the console when the application exits
 
 	return TRUE;
 }
