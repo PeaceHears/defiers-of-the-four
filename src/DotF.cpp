@@ -747,7 +747,7 @@ void UpdateClientData()
 	{
 		const auto& pos = ScreenRectToArrayPoint(inGameRobot->GetSprite()->GetPosition());
 
-		if (inGameRobot->IsRobot())
+		if (inGameRobot->GetControlStatus() == ControlStatus::CS_AI)
 		{
 			inGameData.allyPosition = pos;
 		}
