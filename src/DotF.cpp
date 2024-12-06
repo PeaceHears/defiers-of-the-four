@@ -117,6 +117,34 @@ void GameActivate(HWND _hWindow) {}
 
 void GameDeactivate(HWND _hWindow) {}
 
+const PlayerState& GetPlayerData()
+{
+	std::unordered_map<std::string, PlayerState> gameState;
+	PlayerState playerState;
+
+	// Lock the mutex and copy the shared data
+	{
+		game->GetClient().setDataMutex(gameState);
+		playerState = game->GetClient().getGamerPlayerState(gameState);
+	}
+
+	return playerState;
+}
+
+void SetRobotPositions(Robot& robot)
+{
+	PlayerState playerState = GetPlayerData();
+
+	if (robot.GetControlStatus() == ControlStatus::CS_AI)
+	{
+		robot.GetSprite()->SetPosition(playerState.allyPosition.x * 32, playerState.allyPosition.y * 32);
+	}
+	else
+	{
+		robot.GetSprite()->SetPosition(playerState.position.x * 32, playerState.position.y * 32);
+	}
+}
+
 void GamePaint(HDC _hDC)
 {
 	switch (currentScene) {
@@ -491,23 +519,7 @@ void UpdateCharacters() {
 	{
 		if (isSpectating)
 		{
-			std::unordered_map<std::string, PlayerState> gameState;
-			PlayerState playerState;
-
-			// Lock the mutex and copy the shared data
-			{
-				game->GetClient().setDataMutex(gameState);
-				playerState = game->GetClient().getGamerPlayerState(gameState);
-			}
-
-			if (Robot->GetControlStatus() == ControlStatus::CS_AI)
-			{
-				Robot->GetSprite()->SetPosition(playerState.allyPosition.x * 32, playerState.allyPosition.y * 32);
-			}
-			else
-			{
-				Robot->GetSprite()->SetPosition(playerState.position.x * 32, playerState.position.y * 32);
-			}
+			SetRobotPositions(*Robot);
 		}
 
 		pos = ScreenRectToArrayPoint(Robot->GetSprite()->GetPosition());
@@ -1144,7 +1156,11 @@ void Fire(Character *character) {
 	}		
 
 	bullet->SetBoundsAction(BA_DIE);
+
+
 	bullet->SetPosition(character->GetSprite()->GetPosition().left + character->GetSprite()->GetWidth() / 2, character->GetSprite()->GetPosition().top + character->GetSprite()->GetHeight() / 2);
+
+
 	bullet->SetVelocity(character->GetFireDirection());
 	bullet->SetCharacter(character);
 
@@ -1154,7 +1170,11 @@ void Fire(Character *character) {
 		{
 			break;
 		}
+
+
 		bullet->SetPosition(bullet->GetPosition().left + character->GetFireDirection().x, bullet->GetPosition().top + character->GetFireDirection().y);
+
+
 	}
 	game->AddSprite(bullet);
 }
@@ -1472,23 +1492,7 @@ void InitializeGameWorld() {
 
 		if (isSpectating)
 		{
-			std::unordered_map<std::string, PlayerState> gameState;
-			PlayerState playerState;
-
-			// Lock the mutex and copy the shared data
-			{
-				game->GetClient().setDataMutex(gameState);
-				playerState = game->GetClient().getGamerPlayerState(gameState);
-			}
-
-			if (robots[i]->GetControlStatus() == ControlStatus::CS_AI)
-			{
-				robots[i]->GetSprite()->SetPosition(playerState.allyPosition.x * 32, playerState.allyPosition.y * 32);
-			}
-			else
-			{
-				robots[i]->GetSprite()->SetPosition(playerState.position.x * 32, playerState.position.y * 32);
-			}
+			SetRobotPositions(*robots[i]);
 		}
 		else
 		{
