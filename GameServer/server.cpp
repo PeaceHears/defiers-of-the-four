@@ -22,14 +22,18 @@ GameServer::GameServer(unsigned short port) : port(port)
 // Main server loop
 void GameServer::run() 
 {
+    sf::Clock clock;
+
     while (true) 
     {
+        sf::Time elapsed = clock.restart();
+
         // Handle incoming packets
         sf::Packet packet;
         sf::IpAddress sender;
         unsigned short senderPort;
 
-        if (socket.receive(packet, sender, senderPort) == sf::Socket::Done)
+        while (socket.receive(packet, sender, senderPort) == sf::Socket::Done) 
         {
             handleClientInput(packet, sender, senderPort);
         }
@@ -38,7 +42,13 @@ void GameServer::run()
         broadcastGameState();
 
         // Avoid busy-waiting
-        sf::sleep(sf::milliseconds(16)); // ~60 FPS
+        // Limit the update rate
+        sf::Time frameTime = sf::milliseconds(16); // ~60 updates per second
+
+        if (elapsed < frameTime) 
+        {
+            sf::sleep(frameTime - elapsed);
+        }
     }
 }
 
