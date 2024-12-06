@@ -462,23 +462,6 @@ void HandleJoystick(JOYSTATE _joystickState) {}
 // Game
 //-----------------------------------------------------------------
 
-const PlayerState& getGamerPlayerState(const std::unordered_map<std::string, PlayerState>& localGameState)
-{
-	PlayerState playerData;
-
-	for (const auto& gameData : localGameState)
-	{
-		playerData = gameData.second;
-
-		if (!playerData.isSpectating)
-		{
-			break;
-		}
-	}
-
-	return playerData;
-}
-
 // Update character actions.
 void UpdateCharacters() {
 	int range = 3; // TODO; class variable
@@ -508,25 +491,22 @@ void UpdateCharacters() {
 	{
 		if (isSpectating)
 		{
-			std::unordered_map<std::string, PlayerState> localGameState;
+			std::unordered_map<std::string, PlayerState> gameState;
+			PlayerState playerState;
 
 			// Lock the mutex and copy the shared data
 			{
-				game->GetClient().setDataMutex(localGameState);
+				game->GetClient().setDataMutex(gameState);
+				playerState = game->GetClient().getGamerPlayerState(gameState);
 			}
 
-			const auto& gamerPlayerState = getGamerPlayerState(localGameState);
-
-			if (!gamerPlayerState.isSpectating)
+			if (Robot->GetControlStatus() == ControlStatus::CS_AI)
 			{
-				if (Robot->GetControlStatus() == ControlStatus::CS_AI)
-				{
-					Robot->GetSprite()->SetPosition(gamerPlayerState.allyPosition.x, gamerPlayerState.allyPosition.y);
-				}
-				else
-				{
-					Robot->GetSprite()->SetPosition(gamerPlayerState.position.x, gamerPlayerState.position.y);
-				}
+				Robot->GetSprite()->SetPosition(playerState.allyPosition.x * 32, playerState.allyPosition.y * 32);
+			}
+			else
+			{
+				Robot->GetSprite()->SetPosition(playerState.position.x * 32, playerState.position.y * 32);
 			}
 		}
 
@@ -1492,25 +1472,22 @@ void InitializeGameWorld() {
 
 		if (isSpectating)
 		{
-			std::unordered_map<std::string, PlayerState> localGameState;
+			std::unordered_map<std::string, PlayerState> gameState;
+			PlayerState playerState;
 
 			// Lock the mutex and copy the shared data
 			{
-				game->GetClient().setDataMutex(localGameState);
+				game->GetClient().setDataMutex(gameState);
+				playerState = game->GetClient().getGamerPlayerState(gameState);
 			}
 
-			const auto& gamerPlayerState = getGamerPlayerState(localGameState);
-
-			if (!gamerPlayerState.isSpectating)
+			if (robots[i]->GetControlStatus() == ControlStatus::CS_AI)
 			{
-				if (robots[i]->GetControlStatus() == ControlStatus::CS_AI)
-				{
-					robots[i]->GetSprite()->SetPosition(gamerPlayerState.allyPosition.x, gamerPlayerState.allyPosition.y);
-				}
-				else
-				{
-					robots[i]->GetSprite()->SetPosition(gamerPlayerState.position.x, gamerPlayerState.position.y);
-				}
+				robots[i]->GetSprite()->SetPosition(playerState.allyPosition.x * 32, playerState.allyPosition.y * 32);
+			}
+			else
+			{
+				robots[i]->GetSprite()->SetPosition(playerState.position.x * 32, playerState.position.y * 32);
 			}
 		}
 		else
@@ -1919,11 +1896,8 @@ void HandleMenuButtonClick(int _x, int _y)
 			PlaySound((LPCWSTR)IDW_MENU_CLICK, hInstance, SND_ASYNC | SND_RESOURCE);
 			currentScene = MATCHMAKING;
 
-			InGameData inGameData;
-			inGameData.isSpectating = true;
-
 			{
-				game->GetClient().setInGameData(inGameData);
+				game->GetClient().setSpectaterInfo(isSpectating);
 			}
 		}
 

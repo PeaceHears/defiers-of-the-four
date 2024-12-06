@@ -36,6 +36,8 @@ public:
     void stop(); // Stop the client
     void setInGameData(const InGameData& inGameData);
     void setDataMutex(std::unordered_map<std::string, PlayerState>& gameState);
+    void setSpectaterInfo(const bool isSpectating);
+    const PlayerState& getGamerPlayerState(const std::unordered_map<std::string, PlayerState>& gameState);
 
 private:
     void sendInput();
@@ -51,4 +53,6 @@ private:
     std::string localPlayerId;
     PlayerState localPlayerState;
     std::unordered_map<std::string, PlayerState> sharedGameState;
+
+    void parseGameState(sf::Packet& packet);
 };

@@ -62,40 +62,22 @@ void GameClient::receiveGameState()
 
     sf::Socket::Status status = socket.receive(packet, sender, senderPort);
 
-    if (status == sf::Socket::Done) 
+    while (status == sf::Socket::Done)
     {
-        if (sender == serverAddress && senderPort == serverPort) 
+        if (sender == serverAddress && senderPort == serverPort)
         {
-            // Parse game state
-            //gameState.clear();
-            std::unordered_map<std::string, PlayerState> gameState;
-
-            while (!packet.endOfPacket())
             {
-                std::string ipAddress;
-                unsigned short port;
-                PlayerState state;
-
-                packet >> ipAddress >> port >> state;
-
-                std::string playerId = ipAddress + ":" + std::to_string(port);
-
-                gameState[playerId] = state;
-
-                std::string spectaterInfo = state.isSpectating ? "true" : "false";
-
-                std::cout << "IP & Port: " << playerId << " Is Spectating?: " << spectaterInfo << std::endl;
-
-                // Lock the mutex and update the shared data
-                {
-                    std::lock_guard<std::mutex> lock(dataMutex);
-                    localPlayerState.isSpectating = state.isSpectating;
-                    sharedGameState = gameState;
-                }
+                std::lock_guard<std::mutex> lock(dataMutex);
+                localPlayerId = serverAddress.toString() + ":" + std::to_string(socket.getLocalPort());
             }
+
+            parseGameState(packet);
         }
+
+        status = socket.receive(packet, sender, senderPort);
     }
-    else if (status == sf::Socket::NotReady)
+
+    if (status == sf::Socket::NotReady)
     {
         // No data received yet
         std::cerr << "Server is not ready. No data received yet." << std::endl;
@@ -106,9 +88,40 @@ void GameClient::receiveGameState()
     }
 }
 
+void GameClient::parseGameState(sf::Packet& packet)
+{
+    std::unordered_map<std::string, PlayerState> gameState;
+
+    while (!packet.endOfPacket())
+    {
+        std::string ipAddress;
+        unsigned short port;
+        PlayerState state;
+
+        packet >> ipAddress >> port >> state;
+
+        std::string playerId = ipAddress + ":" + std::to_string(port);
+
+        gameState[playerId] = state;
+
+        std::string spectaterInfo = state.isSpectating ? "true" : "false";
+
+        std::cout << "IP & Port: " << playerId << " Is Spectating?: " << spectaterInfo << std::endl;
+
+        // Lock the mutex and update the shared data
+        {
+            std::lock_guard<std::mutex> lock(dataMutex);
+            localPlayerState.isSpectating = state.isSpectating;
+            sharedGameState = gameState;
+        }
+    }
+}
+
 void GameClient::setInGameData(const InGameData& inGameData)
 {
     std::lock_guard<std::mutex> lock(dataMutex);
+    auto lkd = socket.getLocalPort();
+
     localPlayerState.isSpectating = inGameData.isSpectating;
     localPlayerState.position = sf::Vector2f(inGameData.playerPosition.x, inGameData.playerPosition.y);
     localPlayerState.allyPosition = sf::Vector2f(inGameData.allyPosition.x, inGameData.allyPosition.y);
@@ -118,4 +131,30 @@ void GameClient::setDataMutex(std::unordered_map<std::string, PlayerState>& game
 {
     std::lock_guard<std::mutex> lock(dataMutex);
     gameState = sharedGameState;
+}
+
+void GameClient::setSpectaterInfo(const bool isSpectating)
+{
+    std::lock_guard<std::mutex> lock(dataMutex);
+    localPlayerState.isSpectating = isSpectating;
+}
+
+const PlayerState& GameClient::getGamerPlayerState(const std::unordered_map<std::string, PlayerState>& gameState)
+{
+    std::lock_guard<std::mutex> lock(dataMutex);
+
+    PlayerState playerData;
+
+    for (const auto& gameData : gameState)
+    {
+        const auto& playerId = gameData.first;
+        playerData = gameData.second;
+
+        if (playerId != localPlayerId)
+        {
+            break;
+        }
+    }
+
+    return playerData;
 }

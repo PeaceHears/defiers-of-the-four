@@ -73,7 +73,7 @@ void GameServer::handleClientInput(sf::Packet& packet, sf::IpAddress sender, uns
 }
 
 // Broadcast the game state to all connected clients
-void GameServer::broadcastGameState() 
+void GameServer::broadcastGameState()
 {
     sf::Packet statePacket;
 

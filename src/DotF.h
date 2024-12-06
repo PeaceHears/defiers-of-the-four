@@ -124,8 +124,6 @@ InGameData inGameData;
 bool isSpectating = false;
 Button* btnStart, *btnBackToPlayers2, *btnSpectate;
 
-const PlayerState& getGamerPlayerState(const std::unordered_map<std::string, PlayerState>& localGameState);
-
 //-----------------------------------------------------------------
 // Game
 //-----------------------------------------------------------------
