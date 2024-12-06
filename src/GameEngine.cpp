@@ -82,8 +82,11 @@ int WINAPI WinMain(HINSTANCE _hInstance, HINSTANCE _hPrevInstance,
 			}
 		}
 
-		//client->stop();
-		clientThread.join();
+		if (clientThread.joinable())
+		{
+			//client->stop();
+			clientThread.join();
+		}
 
 		return (int)msg.wParam;
 	}

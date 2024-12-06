@@ -5,21 +5,25 @@
 #include <string>
 #include "Globals.h"
 #include <atomic>
+#include <mutex>
 
 // Player state structure
 struct PlayerState
 {
+    bool isSpectating = false;
     sf::Vector2f position;
     sf::Vector2f allyPosition;
 
     friend sf::Packet& operator<<(sf::Packet& packet, const PlayerState& state)
     {
-        return packet << state.position.x << state.position.y << state.allyPosition.x << state.allyPosition.y;
+        return packet << state.position.x << state.position.y << state.allyPosition.x << state.allyPosition.y 
+            << state.isSpectating;
     }
 
     friend sf::Packet& operator>>(sf::Packet& packet, PlayerState& state)
     {
-        return packet >> state.position.x >> state.position.y >> state.allyPosition.x >> state.allyPosition.y;
+        return packet >> state.position.x >> state.position.y >> state.allyPosition.x >> state.allyPosition.y 
+            >> state.isSpectating;
     }
 };
 
@@ -31,6 +35,7 @@ public:
     void run(); // Main client loop
     void stop(); // Stop the client
     void setInGameData(const InGameData& inGameData);
+    void setDataMutex(std::unordered_map<std::string, PlayerState>& gameState);
 
 private:
     void sendInput();
@@ -41,7 +46,9 @@ private:
     unsigned short serverPort;
 
     std::atomic<bool> running; // Flag to control client thread execution
+    std::mutex dataMutex;
 
+    std::string localPlayerId;
     PlayerState localPlayerState;
-    std::unordered_map<std::string, PlayerState> gameState;
+    std::unordered_map<std::string, PlayerState> sharedGameState;
 };

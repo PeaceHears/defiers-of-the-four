@@ -8,7 +8,6 @@
 //-----------------------------------------------------------------
 #include "DotF.h"
 
-#include "client.h"
 #include <iostream>
 
 #define ALLY_BULLET_DAMAGE 10
@@ -143,9 +142,14 @@ void GamePaint(HDC _hDC)
 		DrawRobotsOnMenu(_hDC);
 		// Select menu buttons
 		btnBackToPlayers->Draw(_hDC);
-		if (selectedRobotIndexes.size() == playerCount * 2) {
+
+		btnSpectate->Draw(_hDC);
+
+		if (selectedRobotIndexes.size() == playerCount * 2) 
+		{
 			btnReady->Draw(_hDC);
 		}
+
 		break;
 	case MATCHMAKING:
 		bmMenuBackground->Draw(_hDC, 0, 0);
@@ -458,6 +462,23 @@ void HandleJoystick(JOYSTATE _joystickState) {}
 // Game
 //-----------------------------------------------------------------
 
+const PlayerState& getGamerPlayerState(const std::unordered_map<std::string, PlayerState>& localGameState)
+{
+	PlayerState playerData;
+
+	for (const auto& gameData : localGameState)
+	{
+		playerData = gameData.second;
+
+		if (!playerData.isSpectating)
+		{
+			break;
+		}
+	}
+
+	return playerData;
+}
+
 // Update character actions.
 void UpdateCharacters() {
 	int range = 3; // TODO; class variable
@@ -483,7 +504,32 @@ void UpdateCharacters() {
 	}
 
 	// Update robot map vector positions, also fire delay
-	for (auto &Robot : inGameRobots) {
+	for (auto &Robot : inGameRobots) 
+	{
+		if (isSpectating)
+		{
+			std::unordered_map<std::string, PlayerState> localGameState;
+
+			// Lock the mutex and copy the shared data
+			{
+				game->GetClient().setDataMutex(localGameState);
+			}
+
+			const auto& gamerPlayerState = getGamerPlayerState(localGameState);
+
+			if (!gamerPlayerState.isSpectating)
+			{
+				if (Robot->GetControlStatus() == ControlStatus::CS_AI)
+				{
+					Robot->GetSprite()->SetPosition(gamerPlayerState.allyPosition.x, gamerPlayerState.allyPosition.y);
+				}
+				else
+				{
+					Robot->GetSprite()->SetPosition(gamerPlayerState.position.x, gamerPlayerState.position.y);
+				}
+			}
+		}
+
 		pos = ScreenRectToArrayPoint(Robot->GetSprite()->GetPosition());
 		Robot->SetMapPosition(pos);
 		Robot->UpdateStatusMessages();
@@ -743,7 +789,9 @@ void UpdateObstacles() {
 
 void UpdateClientData()
 {
-	for (const auto& inGameRobot : inGameRobots) 
+	inGameData.isSpectating = isSpectating;
+
+	for (const auto& inGameRobot : inGameRobots)
 	{
 		const auto& pos = ScreenRectToArrayPoint(inGameRobot->GetSprite()->GetPosition());
 
@@ -756,7 +804,9 @@ void UpdateClientData()
 			inGameData.playerPosition = pos;
 		}
 
-		game->GetClient().setInGameData(inGameData);
+		{
+			game->GetClient().setInGameData(inGameData);
+		}
 	}
 }
 
@@ -1435,9 +1485,39 @@ void InitializeGameWorld() {
 	// of these robots, and push it to vector which
 	// will be used during gameplay to control robots.
 	// Also add sprites to sprite manager.
-	for (auto i : selectedRobotIndexes) {
+
+	for (auto i : selectedRobotIndexes) 
+	{
 		inGameRobots.push_back(robots[i]);
-		robots[i]->GetSprite()->SetPosition((14+2*i) * 32, 23*32);
+
+		if (isSpectating)
+		{
+			std::unordered_map<std::string, PlayerState> localGameState;
+
+			// Lock the mutex and copy the shared data
+			{
+				game->GetClient().setDataMutex(localGameState);
+			}
+
+			const auto& gamerPlayerState = getGamerPlayerState(localGameState);
+
+			if (!gamerPlayerState.isSpectating)
+			{
+				if (robots[i]->GetControlStatus() == ControlStatus::CS_AI)
+				{
+					robots[i]->GetSprite()->SetPosition(gamerPlayerState.allyPosition.x, gamerPlayerState.allyPosition.y);
+				}
+				else
+				{
+					robots[i]->GetSprite()->SetPosition(gamerPlayerState.position.x, gamerPlayerState.position.y);
+				}
+			}
+		}
+		else
+		{
+			robots[i]->GetSprite()->SetPosition((14 + 2 * i) * 32, 23 * 32);
+		}
+
 		robots[i]->GetSprite()->SetZOrder(10);
 		game->AddSprite(robots[i]->GetSprite());
 	}
@@ -1766,6 +1846,8 @@ void CreateButtons(HDC _hDC)
 	menuPlayersButtons.push_back(btnBackToMain);
 
 	// Character select buttons
+	btnSpectate = new Button(_hDC, (LPTSTR)TEXT("Spectate"), (RES_W / 2) - (BTN_WIDTH / 2), 600);
+	menuRobotsButtons.push_back(btnSpectate);
 	btnReady = new Button(_hDC, (LPTSTR)TEXT("Begin"), (RES_W / 2) - (BTN_WIDTH / 2), 650);
 	menuRobotsButtons.push_back(btnReady);
 	btnBackToPlayers = new Button(_hDC, (LPTSTR)TEXT("Back"), (RES_W / 2) - (BTN_WIDTH / 2), 700);
@@ -1824,11 +1906,25 @@ void HandleMenuButtonClick(int _x, int _y)
 		break;
 	case MENU_SELECT_ROBOTS:
 		// Button click - Ready
-		if (btnReady->GetSprite()->IsPointInside(_x, _y) && playerCount * 2 == selectedRobotIndexes.size()) {
+		if (btnReady->GetSprite()->IsPointInside(_x, _y) && playerCount * 2 == selectedRobotIndexes.size())
+		{
 			//InitializeGameWorld();
 			PlaySound((LPCWSTR)IDW_MENU_CLICK, hInstance, SND_ASYNC | SND_RESOURCE);
 			//currentScene = GAME_PLAY;
 			currentScene = MATCHMAKING;
+		}
+		else if (btnSpectate->GetSprite()->IsPointInside(_x, _y))
+		{
+			isSpectating = true;
+			PlaySound((LPCWSTR)IDW_MENU_CLICK, hInstance, SND_ASYNC | SND_RESOURCE);
+			currentScene = MATCHMAKING;
+
+			InGameData inGameData;
+			inGameData.isSpectating = true;
+
+			{
+				game->GetClient().setInGameData(inGameData);
+			}
 		}
 
 		// Button click - Back

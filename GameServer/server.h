@@ -7,17 +7,20 @@
 // Player state structure
 struct PlayerState
 {
+    bool isSpectating = false;
     sf::Vector2f position;
     sf::Vector2f allyPosition;
 
     friend sf::Packet& operator<<(sf::Packet& packet, const PlayerState& state)
     {
-        return packet << state.position.x << state.position.y << state.allyPosition.x << state.allyPosition.y;
+        return packet << state.position.x << state.position.y << state.allyPosition.x << state.allyPosition.y 
+            << state.isSpectating;
     }
 
     friend sf::Packet& operator>>(sf::Packet& packet, PlayerState& state)
     {
-        return packet >> state.position.x >> state.position.y >> state.allyPosition.x >> state.allyPosition.y;
+        return packet >> state.position.x >> state.position.y >> state.allyPosition.x >> state.allyPosition.y 
+            >> state.isSpectating;
     }
 };
 

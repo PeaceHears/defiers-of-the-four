@@ -53,8 +53,8 @@ void GameServer::handleClientInput(sf::Packet& packet, sf::IpAddress sender, uns
         players[{sender, senderPort}] = state;
 
         std::cout << "Received input from " << sender << ":" << senderPort
-            << " -> Position: (" << state.position.x << ", " << state.position.y 
-            << " -> Ally Position: (" << state.allyPosition.x << ", " << state.allyPosition.y  << std::endl;
+            << " -> Position: (" << state.position.x << ", " << state.position.y << ")"
+            << " -> Ally Position: (" << state.allyPosition.x << ", " << state.allyPosition.y << ")" << std::endl;
     }
     else 
     {
@@ -65,21 +65,23 @@ void GameServer::handleClientInput(sf::Packet& packet, sf::IpAddress sender, uns
 // Broadcast the game state to all connected clients
 void GameServer::broadcastGameState() 
 {
+    sf::Packet statePacket;
+
+    // Pack the state of all players
+    for (const auto& player : players)
+    {
+        const auto& client = player.first;
+        const auto& state = player.second;
+
+        statePacket << client.first.toString() << client.second << state;
+    }
+
     for (const auto& player : players) 
     {
         const auto& client = player.first;
 
-        sf::Packet statePacket;
-
-        // Pack the state of all players
-        for (const auto& player : players) 
-        {
-            const auto& otherClient = player.first;
-            const auto& otherState = player.second;
-
-            statePacket << otherClient.first.toString() << otherState;
-        }
-
+        std::cout << "SEND -> IP & Port: " << client.first.toString() << ":" << client.second << std::endl;
+        
         // Send the state packet to the specific client
         if (socket.send(statePacket, client.first, client.second) != sf::Socket::Done) 
         {

@@ -27,11 +27,11 @@ void GameClient::run()
         receiveGameState(); // Receive updated game state from the server
 
         //Simulate game update/rendering logic here
-        std::cout << "Game state received: " << gameState.size() << " players active." << std::endl;
+        std::cout << "Game state received: " << sharedGameState.size() << " players active." << std::endl;
 
         //Add a small delay to prevent high CPU usage
         //std::this_thread::sleep_for(std::chrono::milliseconds(16)); // ~60 FPS
-        sf::sleep(sf::milliseconds(16));
+        sf::sleep(sf::milliseconds(16)); // ~60 FPS
     }
 }
 
@@ -67,14 +67,31 @@ void GameClient::receiveGameState()
         if (sender == serverAddress && senderPort == serverPort) 
         {
             // Parse game state
-            gameState.clear();
+            //gameState.clear();
+            std::unordered_map<std::string, PlayerState> gameState;
 
             while (!packet.endOfPacket())
             {
-                std::string playerId;
+                std::string ipAddress;
+                unsigned short port;
                 PlayerState state;
-                packet >> playerId >> state;
+
+                packet >> ipAddress >> port >> state;
+
+                std::string playerId = ipAddress + ":" + std::to_string(port);
+
                 gameState[playerId] = state;
+
+                std::string spectaterInfo = state.isSpectating ? "true" : "false";
+
+                std::cout << "IP & Port: " << playerId << " Is Spectating?: " << spectaterInfo << std::endl;
+
+                // Lock the mutex and update the shared data
+                {
+                    std::lock_guard<std::mutex> lock(dataMutex);
+                    localPlayerState.isSpectating = state.isSpectating;
+                    sharedGameState = gameState;
+                }
             }
         }
     }
@@ -91,6 +108,14 @@ void GameClient::receiveGameState()
 
 void GameClient::setInGameData(const InGameData& inGameData)
 {
+    std::lock_guard<std::mutex> lock(dataMutex);
+    localPlayerState.isSpectating = inGameData.isSpectating;
     localPlayerState.position = sf::Vector2f(inGameData.playerPosition.x, inGameData.playerPosition.y);
     localPlayerState.allyPosition = sf::Vector2f(inGameData.allyPosition.x, inGameData.allyPosition.y);
+}
+
+void GameClient::setDataMutex(std::unordered_map<std::string, PlayerState>& gameState)
+{
+    std::lock_guard<std::mutex> lock(dataMutex);
+    gameState = sharedGameState;
 }

@@ -3,6 +3,7 @@
 
 struct InGameData
 {
+    bool isSpectating = false;
     POINT playerPosition;
     POINT allyPosition;
 };
