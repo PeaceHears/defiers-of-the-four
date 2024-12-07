@@ -17,9 +17,27 @@
 //-----------------------------------------------------------------
 GameEngine *GameEngine::gameEngine = NULL;
 
+void CloseConsole()
+{
+	// Redirect standard streams back to null
+	FILE* file;
+	freopen_s(&file, "NUL", "w", stdout);
+	//if (file) fclose(file); // Close the file stream for stdout
+
+	freopen_s(&file, "NUL", "r", stdin);
+	//if (file) fclose(file); // Close the file stream for stdin
+
+	freopen_s(&file, "NUL", "w", stderr);
+	//if (file) fclose(file); // Close the file stream for stderr
+
+	// Free the console
+	FreeConsole();
+}
+
 //-----------------------------------------------------------------
 // Windows Functions
 //-----------------------------------------------------------------
+
 int WINAPI WinMain(HINSTANCE _hInstance, HINSTANCE _hPrevInstance,
 	PSTR _cmdLine, int _cmdShow)
 {
@@ -91,11 +109,10 @@ int WINAPI WinMain(HINSTANCE _hInstance, HINSTANCE _hPrevInstance,
 		return (int)msg.wParam;
 	}
 
+	CloseConsole();
+
 	// End the game
 	GameEnd();
-
-	fclose(file);
-	FreeConsole(); // Free the console when the application exits
 
 	return TRUE;
 }
@@ -249,6 +266,7 @@ LRESULT GameEngine::HandleEvent(HWND _hWindow, UINT _msg, WPARAM _wParam, LPARAM
 
 	case WM_DESTROY:
 		// End the game and exit the application
+		CloseConsole();
 		GameEnd();
 		PostQuitMessage(0);
 		return 0;
