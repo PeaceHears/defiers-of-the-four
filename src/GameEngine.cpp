@@ -32,6 +32,8 @@ void CloseConsole()
 
 	// Free the console
 	FreeConsole();
+
+	std::exit(0);
 }
 
 //-----------------------------------------------------------------
