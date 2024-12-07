@@ -111,7 +111,6 @@ void GameClient::parseGameState(sf::Packet& packet)
         // Lock the mutex and update the shared data
         {
             std::lock_guard<std::mutex> lock(dataMutex);
-            localPlayerState.isSpectating = state.isSpectating;
             sharedGameState = gameState;
         }
     }
