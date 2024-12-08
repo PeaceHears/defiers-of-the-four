@@ -147,7 +147,7 @@ void UpdateClientData()
 	}
 }
 
-const PlayerState& GetPlayerDataFromClient()
+PlayerState GetPlayerDataFromClient()
 {
 	std::unordered_map<std::string, PlayerState> gameState;
 	PlayerState playerState;
@@ -159,6 +159,12 @@ const PlayerState& GetPlayerDataFromClient()
 	}
 
 	return playerState;
+}
+
+const std::vector<std::vector<int>>& GetMapFromClient()
+{
+	PlayerState playerState = GetPlayerDataFromClient();
+	return playerState.map;
 }
 
 void SetRobotPositionsFromClient(Robot& robot)
@@ -1637,64 +1643,96 @@ void InitializeGameWorld()
 	// Initially add robot control to each player.
 	// Default value of control status is AI.
 	inGameRobots[0]->SetControlStatus(CS_P1);
-	if (playerCount == 2) {
+
+	if (playerCount == 2) 
+	{
 		inGameRobots[1]->SetControlStatus(CS_P2);
 	}
 
 	// Create map
 	for (size_t i = 0; i < NUM_MAP; i++)
 	{
-		if (i == 2) {
+		if (i == 2) 
+		{
 			maps[i] = CreateBossMap();
 			continue;
 		}
 
-		Map newmap = CreateMap(true);
-		maps[i] = newmap;
+		if (isSpectating)
+		{
+			PlayerState playerState = GetPlayerDataFromClient();
+
+			if (playerState.map.empty()) // TODO: Fix this wrong behaviour
+			{
+				Map newmap = CreateMap(true);
+				maps[i] = newmap;
+			}
+			else
+			{
+				maps[i] = playerState.map;
+			}
+		}
+		else
+		{
+			Map newmap = CreateMap(true);
+			maps[i] = newmap;
+
+			if (i == 0)
+			{
+				{
+					game->GetClient().setMapData(newmap);
+				}
+			}
+		}
 	}
 
 	//TODO: change later
 	SwitchFow();
 
-	//int enemyBaseCount = 0;
-	//int wallCount = 0;
+	if (maps->empty())
+	{
+		return;
+	}
 
-	//// 0 -> Empty
-	//// 1 -> Enemy base
-	//// 2 -> Wall
-	//Sprite* spr;
-	//WallSprite* wspr;
-	//for (int i = 0; i < maps[0].size(); i++)
-	//{
-	//	for (int j = 0; j < maps[0][0].size(); j++)
-	//	{
-	//		// left to right; which map, which row, which col.
-	//		if (maps[0][i][j] == 1)
-	//		{
-	//			
-	//			spr = new Sprite(bmEnemyBase);
-	//			spr->SetPosition(j * 32, i * 32);
-	//			DemonBase* base = new DemonBase({ j, i }, enemyBaseCount, spr);
-	//			base->SetMapPosition(ScreenRectToArrayPoint(spr->GetPosition()));
-	//			demonBases.push_back(base);
-	//			spr->SetSpriteType(ST_BASE);
-	//			game->AddSprite(spr);
-	//			spr->SetPosition(j * 32, i * 32);
-	//			numEnemyBases++;
-	//			enemyBaseCount++;
+	int enemyBaseCount = 0;
+	int wallCount = 0;
 
-	//			//AddDemon(base); // add demon on create
-	//		}
-	//		if (maps[0][i][j] == 2)
-	//		{
-	//			wspr = new WallSprite(bmWall1);
-	//			wspr->SetSpriteType(ST_WALL);
-	//			game->AddSprite(wspr);
-	//			wspr->SetPosition(j * 32, i * 32);
-	//			wallCount++;
-	//		}
-	//	}
-	//}
+	// 0 -> Empty
+	// 1 -> Enemy base
+	// 2 -> Wall
+	Sprite* spr;
+	WallSprite* wspr;
+	for (int i = 0; i < maps[0].size(); i++)
+	{
+		for (int j = 0; j < maps[0][0].size(); j++)
+		{
+			// left to right; which map, which row, which col.
+			if (maps[0][i][j] == 1)
+			{
+				
+				spr = new Sprite(bmEnemyBase);
+				spr->SetPosition(j * 32, i * 32);
+				DemonBase* base = new DemonBase({ j, i }, enemyBaseCount, spr);
+				base->SetMapPosition(ScreenRectToArrayPoint(spr->GetPosition()));
+				demonBases.push_back(base);
+				spr->SetSpriteType(ST_BASE);
+				game->AddSprite(spr);
+				spr->SetPosition(j * 32, i * 32);
+				numEnemyBases++;
+				enemyBaseCount++;
+
+				//AddDemon(base); // add demon on create
+			}
+			if (maps[0][i][j] == 2)
+			{
+				wspr = new WallSprite(bmWall1);
+				wspr->SetSpriteType(ST_WALL);
+				game->AddSprite(wspr);
+				wspr->SetPosition(j * 32, i * 32);
+				wallCount++;
+			}
+		}
+	}
 }
 
 // Handles map generation.
@@ -2061,7 +2099,8 @@ void HandleMenuButtonClick(int _x, int _y)
 		break;
 	case MATCHMAKING:
 		// Button click - Start
-		if (btnStart->GetSprite()->IsPointInside(_x, _y)) {
+		if (btnStart->GetSprite()->IsPointInside(_x, _y)) 
+		{
 			InitializeGameWorld();
 			PlaySound((LPCWSTR)IDW_MENU_CLICK, hInstance, SND_ASYNC | SND_RESOURCE);
 			currentScene = GAME_PLAY;

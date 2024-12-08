@@ -118,10 +118,16 @@ void GameClient::parseGameState(sf::Packet& packet)
         {
             if (localPlayerId == gameData.first)
             {
-                localPlayerState = gameData.second;
+                localPlayerState.shootingRobotIndex = gameData.second.shootingRobotIndex;
             }
         }
     }
+}
+
+void GameClient::setMapData(const std::vector<std::vector<int>>& map)
+{
+    std::lock_guard<std::mutex> lock(dataMutex);
+    localPlayerState.map = map;
 }
 
 void GameClient::setInGameData(const InGameData& inGameData)
@@ -151,7 +157,7 @@ void GameClient::setSpectaterInfo(const bool isSpectating)
     localPlayerState.isSpectating = isSpectating;
 }
 
-const PlayerState& GameClient::getGamerPlayerState(const std::unordered_map<std::string, PlayerState>& gameState)
+PlayerState GameClient::getGamerPlayerState(const std::unordered_map<std::string, PlayerState>& gameState)
 {
     std::lock_guard<std::mutex> lock(dataMutex);
 
@@ -162,7 +168,7 @@ const PlayerState& GameClient::getGamerPlayerState(const std::unordered_map<std:
         const auto& playerId = gameData.first;
         playerData = gameData.second;
 
-        if (playerId != localPlayerId)
+        if (playerId != localPlayerId && !playerData.isSpectating)
         {
             break;
         }
@@ -171,7 +177,7 @@ const PlayerState& GameClient::getGamerPlayerState(const std::unordered_map<std:
     return playerData;
 }
 
-const PlayerState& GameClient::getSpectatorState(const std::unordered_map<std::string, PlayerState>& gameState)
+PlayerState GameClient::getSpectatorState(const std::unordered_map<std::string, PlayerState>& gameState)
 {
     std::lock_guard<std::mutex> lock(dataMutex);
 

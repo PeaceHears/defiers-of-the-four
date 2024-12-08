@@ -7,6 +7,8 @@
 // Player state structure
 struct PlayerState
 {
+    std::vector<std::vector<int>> map;
+
     bool isSpectating = false;
 
     sf::Vector2f position;
@@ -17,14 +19,60 @@ struct PlayerState
 
     friend sf::Packet& operator<<(sf::Packet& packet, const PlayerState& state)
     {
-        return packet << state.position.x << state.position.y << state.allyPosition.x << state.allyPosition.y
+        // Serialize the size of the map
+        packet << static_cast<sf::Uint32>(state.map.size());
+
+        // Serialize each item in the map
+        for (const auto& mapItem : state.map)
+        {
+            // Serialize the size of the inner vector
+            packet << static_cast<sf::Uint32>(mapItem.size());
+
+            // Serialize each element in the inner vector
+            for (const auto& item : mapItem)
+            {
+                packet << item;
+            }
+        }
+
+        // Serialize player robots values
+        packet << state.position.x << state.position.y << state.allyPosition.x << state.allyPosition.y
             << state.isSpectating << state.shootingRobotIndex << state.fireDirection.x << state.fireDirection.y;
+
+        return packet;
     }
 
     friend sf::Packet& operator>>(sf::Packet& packet, PlayerState& state)
     {
-        return packet >> state.position.x >> state.position.y >> state.allyPosition.x >> state.allyPosition.y
+        sf::Uint32 mapOuterSize;
+
+        // Deserialize the outer vector size
+        if (packet >> mapOuterSize)
+        {
+            state.map.resize(mapOuterSize);
+
+            // Deserialize each inner vector
+            for (sf::Uint32 i = 0; i < mapOuterSize; ++i)
+            {
+                sf::Uint32 mapInnerSize;
+
+                if (packet >> mapInnerSize)
+                {
+                    state.map[i].resize(mapInnerSize);
+
+                    // Deserialize each element in the inner vector
+                    for (sf::Uint32 j = 0; j < mapInnerSize; ++j)
+                    {
+                        packet >> state.map[i][j];
+                    }
+                }
+            }
+        }
+
+        packet >> state.position.x >> state.position.y >> state.allyPosition.x >> state.allyPosition.y
             >> state.isSpectating >> state.shootingRobotIndex >> state.fireDirection.x >> state.fireDirection.y;
+
+        return packet;
     }
 };
 
