@@ -208,9 +208,9 @@ Map		CreateBossMap();
 // Update
 void			Player1Controls();
 void			Player2Controls();
-Robot*			GetPlayersRobot(int _player);
+Robot*			GetPlayersRobot(int _player, int& _robotIndex);
 void			SwitchRobot(int _player);
-void			Fire(Character *character);
+void			Fire(Character *character, const int robotIndex = -1);
 void			UpdateCharacters();
 void			UpdateBases();
 void			UpdateObstacles();

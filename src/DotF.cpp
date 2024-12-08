@@ -117,7 +117,37 @@ void GameActivate(HWND _hWindow) {}
 
 void GameDeactivate(HWND _hWindow) {}
 
-const PlayerState& GetPlayerData()
+/*
+
+CLIENT
+
+*/
+#pragma region CLIENT
+
+void UpdateClientData()
+{
+	inGameData.isSpectating = isSpectating;
+
+	for (const auto& inGameRobot : inGameRobots)
+	{
+		const auto& pos = ScreenRectToArrayPoint(inGameRobot->GetSprite()->GetPosition());
+
+		if (inGameRobot->GetControlStatus() == ControlStatus::CS_AI)
+		{
+			inGameData.allyPosition = pos;
+		}
+		else
+		{
+			inGameData.playerPosition = pos;
+		}
+
+		{
+			game->GetClient().setInGameData(inGameData);
+		}
+	}
+}
+
+const PlayerState& GetPlayerDataFromClient()
 {
 	std::unordered_map<std::string, PlayerState> gameState;
 	PlayerState playerState;
@@ -131,9 +161,9 @@ const PlayerState& GetPlayerData()
 	return playerState;
 }
 
-void SetRobotPositions(Robot& robot)
+void SetRobotPositionsFromClient(Robot& robot)
 {
-	PlayerState playerState = GetPlayerData();
+	PlayerState playerState = GetPlayerDataFromClient();
 
 	if (robot.GetControlStatus() == ControlStatus::CS_AI)
 	{
@@ -144,6 +174,48 @@ void SetRobotPositions(Robot& robot)
 		robot.GetSprite()->SetPosition(playerState.position.x * 32, playerState.position.y * 32);
 	}
 }
+
+void CheckFireFromClient()
+{
+	PlayerState playerState = GetPlayerDataFromClient();
+
+	if (playerState.shootingRobotIndex < 0)
+	{
+		return;
+	}
+
+	int robotIndex = 0;
+
+	for (const auto& robot : inGameRobots)
+	{
+		if (robotIndex == playerState.shootingRobotIndex)
+		{
+			//TODO: You're already doing this for AI robots, so this is unnecessary for them
+			Fire(robot);
+
+			{
+				game->GetClient().setBulletData(-2);
+			}
+
+			break;
+		}
+
+		robotIndex++;
+	}
+}
+
+const POINT& GetFireDirectionFromClient()
+{
+	const auto& playerData = GetPlayerDataFromClient();
+
+	POINT fireDirection;
+	fireDirection.x = playerData.fireDirection.x;
+	fireDirection.y = playerData.fireDirection.y;
+
+	return fireDirection;
+}
+
+#pragma endregion CLIENT 
 
 void GamePaint(HDC _hDC)
 {
@@ -249,11 +321,16 @@ void GameCycle()
 
 	if (currentScene == GAME_PLAY) 
 	{
-		UpdateCharacters();	
+		UpdateCharacters();
 		UpdateBases();
 		UpdateObstacles();
 
 		UpdateClientData();
+
+		if (isSpectating)
+		{
+			CheckFireFromClient();
+		}
 	}
 
 	// Obtain a device context for repainting the game
@@ -519,7 +596,7 @@ void UpdateCharacters() {
 	{
 		if (isSpectating)
 		{
-			SetRobotPositions(*Robot);
+			SetRobotPositionsFromClient(*Robot);
 		}
 
 		pos = ScreenRectToArrayPoint(Robot->GetSprite()->GetPosition());
@@ -546,7 +623,8 @@ void UpdateCharacters() {
 	Demon* d;
 
 	// Set nearby targets and allies for robots
-	for (auto &Robot : inGameRobots) {
+	for (auto &Robot : inGameRobots) 
+	{
 		nearbyDemons.clear(); // reset
 		nearbyRobots.clear(); // reset
 
@@ -589,7 +667,8 @@ void UpdateCharacters() {
 		if (Robot->GetRobotType() != R_CAPTAIN) Robot->ResetStatsToDefault();
 
 		// Boss 1 fire to these robots
-		if (demonBoss1 != NULL && rand() % 2) {
+		if (demonBoss1 != NULL && rand() % 2) 
+		{
 			demonBoss1->SetFireDirection(Robot);
 			Fire(demonBoss1);
 		}
@@ -632,30 +711,41 @@ void UpdateCharacters() {
 	// Robot actions
 	bool robotFlag = false; // set if P1 is followed, so that other AI will follow P2
 	Character *target;
-	for (auto &robot : inGameRobots) {
+	int robotIndex = 0;
+
+	for (auto &robot : inGameRobots) 
+	{
 		// AI controlled
-		if (robot->GetControlStatus() == CS_AI) {
+		if (robot->GetControlStatus() == CS_AI) 
+		{
 			// no enemy is around
-			if (robot->GetNearbyDemons().size() == 0) {
+			if (robot->GetNearbyDemons().size() == 0) 
+			{
 				// TODO; maybe use skill too?
 				robot->SetTask(AT_FOLLOW);
 
-				if (!robotFlag) {
-					target = GetPlayersRobot(1);
+				int robotIndex = -1;
+
+				if (!robotFlag) 
+				{
+					target = GetPlayersRobot(1, robotIndex);
 					robotFlag = true;
 				}
-				else {
-					target = GetPlayersRobot(2);				
-				}
-				robot->SetTarget(target);
-				
-				if (robot->IsReady()) {
-					robot->SetPath(FollowRobot(robot->GetMapPosition(), target->GetMapPosition(), currentMap));
+				else 
+				{
+					target = GetPlayersRobot(2, robotIndex);
 				}
 
+				robot->SetTarget(target);
+				
+				if (robot->IsReady()) 
+				{
+					robot->SetPath(FollowRobot(robot->GetMapPosition(), target->GetMapPosition(), currentMap));
+				}
 			}
 			// there are enemies around
-			else {
+			else 
+			{
 				robot->SetTask(AT_ATTACK);
 				target = robot->GetNearbyDemons().front();
 
@@ -668,19 +758,30 @@ void UpdateCharacters() {
 
 				int roll = rand() % 5;
 				// attack
-				if (roll == 0) {
-					robot->SetFireDirection(target);
-					Fire(robot);
+				if (roll == 0) 
+				{
+					if (isSpectating)
+					{
+						robot->SetFireDirection(GetFireDirectionFromClient());
+					}
+					else
+					{
+						robot->SetFireDirection(target);
+					}
+
+					Fire(robot, robotIndex);
 				}
 				// evade
-				else if (roll == 1) {
-					
+				else if (roll == 1) 
+				{
 				}	
 			}
+
 			robot->Update();
 		}
 		// player controlled
-		else {
+		else 
+		{
 		}
 
 		
@@ -705,9 +806,8 @@ void UpdateCharacters() {
 				
 			}
 		}
-
 		
-
+		robotIndex++;
 	}
 
 	// Demon actions
@@ -779,29 +879,6 @@ void UpdateObstacles() {
 
 }
 
-void UpdateClientData()
-{
-	inGameData.isSpectating = isSpectating;
-
-	for (const auto& inGameRobot : inGameRobots)
-	{
-		const auto& pos = ScreenRectToArrayPoint(inGameRobot->GetSprite()->GetPosition());
-
-		if (inGameRobot->GetControlStatus() == ControlStatus::CS_AI)
-		{
-			inGameData.allyPosition = pos;
-		}
-		else
-		{
-			inGameData.playerPosition = pos;
-		}
-
-		{
-			game->GetClient().setInGameData(inGameData);
-		}
-	}
-}
-
 // Creates all robots in the game at the start.
 void CreateRobots(HDC _hDC) {
 	Sprite *robotSprite, *menuSprite;
@@ -849,8 +926,12 @@ void CreateRobots(HDC _hDC) {
 }
 
 // Handles Player 1's key controls, only in game play scene.
-void Player1Controls() {
-	Robot *robot = GetPlayersRobot(1);
+void Player1Controls() 
+{
+	int robotIndex = 0;
+
+	Robot *robot = GetPlayersRobot(1, robotIndex);
+
 	// Robot movement
 	POINT velocity = { 0,0 };
 	POINT fireDirection = { 0, 0 };
@@ -872,9 +953,17 @@ void Player1Controls() {
 		fireDirection.x = robot->GetFireSpeed();
 	}
 
-	// Set fire direction
-	if (fireDirection.x != 0 || fireDirection.y != 0) {
-		robot->SetFireDirection(fireDirection);
+	if (isSpectating)
+	{
+		robot->SetFireDirection(GetFireDirectionFromClient());
+	}
+	else
+	{
+		// Set fire direction
+		if (fireDirection.x != 0 || fireDirection.y != 0) 
+		{
+			robot->SetFireDirection(fireDirection);
+		}
 	}
 
 	// Slow down on diagonal, othersie diagonal moves are x2 faster than normal ones.
@@ -894,8 +983,9 @@ void Player1Controls() {
 
 	// Fire
 	//robot->SetCurFireDelay(robot->GetCurFireDelay() + 1);
-	if (/*robot->GetCurFireDelay() > robot->GetFireDelay() &&*/ GetAsyncKeyState(VK_LCONTROL)) {
-		Fire(robot);
+	if (/*robot->GetCurFireDelay() > robot->GetFireDelay() &&*/ GetAsyncKeyState(VK_LCONTROL)) 
+	{
+		Fire(robot, robotIndex);
 		//robot->SetCurFireDelay(0);
 	}
 
@@ -962,8 +1052,12 @@ void Player1Controls() {
 }
 
 // Handles Player 2's key controls, only in game play scene.
-void Player2Controls() {
-	Robot *robot = GetPlayersRobot(2);
+void Player2Controls() 
+{
+	int robotIndex = 0;
+
+	Robot *robot = GetPlayersRobot(2, robotIndex);
+
 	// Robot movement
 	POINT velocity = { 0,0 };
 	POINT fireDirection = { 0, 0 };
@@ -1007,8 +1101,9 @@ void Player2Controls() {
 
 	// Fire
 	//robot->SetCurFireDelay(robot->GetCurFireDelay() + 1);
-	if (/*robot->GetCurFireDelay() > robot->GetFireDelay() &&*/ GetAsyncKeyState(VK_RETURN)) {
-		Fire(robot);
+	if (/*robot->GetCurFireDelay() > robot->GetFireDelay() &&*/ GetAsyncKeyState(VK_RETURN)) 
+	{
+		Fire(robot, robotIndex);
 		//robot->SetCurFireDelay(0);
 	}
 
@@ -1075,21 +1170,35 @@ void Player2Controls() {
 }
 
 // Returns the robot currently controlled by _player.
-Robot* GetPlayersRobot(int _player) {
-	switch (_player) {
+Robot* GetPlayersRobot(const int _player, int& _robotIndex) 
+{
+	int robotIndex = 0;
+
+	switch (_player) 
+	{
 	case 1:
-		for (auto &Robot : inGameRobots) {
-			if (Robot->GetControlStatus() == CS_P1) {
+		for (auto &Robot : inGameRobots) 
+		{
+			if (Robot->GetControlStatus() == CS_P1) 
+			{
+				_robotIndex = robotIndex;
 				return Robot;
 			}
+
+			robotIndex++;
 		}
 		return NULL;
 	case 2:
-		for (auto &Robot : inGameRobots) {
+		for (auto &Robot : inGameRobots) 
+		{
 			
-			if (Robot->GetControlStatus() == CS_P2) {
+			if (Robot->GetControlStatus() == CS_P2) 
+			{
+				_robotIndex = robotIndex;
 				return Robot;
 			}
+
+			robotIndex++;
 		}
 		return NULL;
 	default:
@@ -1137,45 +1246,66 @@ void SwitchRobot(int _player) {
 }
 
 // Fire from a character
-void Fire(Character *character) {
-	if (character->GetCurFireDelay() < character->GetFireDelay()) return;
+void Fire(Character *character, const int robotIndex) 
+{
+	if (character->GetCurFireDelay() < character->GetFireDelay())
+	{
+		return;
+	}
+
 	character->SetCurFireDelay(0);
 
-	if (character->GetFireDirection().x == 0 && character->GetFireDirection().y == 0) return;
+	const auto& fireDirection = character->GetFireDirection();
 
+	if (fireDirection.x == 0 && fireDirection.y == 0)
+	{
+		return;
+	}
+
+	//TODO: object pooling
 	Sprite *bullet;
-	if (character->IsRobot()) {
+	if (character->IsRobot()) 
+	{
 		PlaySound((LPCWSTR)IDW_ROBOT_FIRE, hInstance, SND_ASYNC | SND_RESOURCE);
 		bullet = new Sprite(bmBullet);
 		bullet->SetSpriteType(ST_ALLY_BULLET);
+
+		if (!isSpectating && robotIndex > -1)
+		{
+			{
+				game->GetClient().setBulletData(robotIndex, fireDirection.x, fireDirection.y);
+			}
+		}
 	}
-	else {
+	else 
+	{
 		PlaySound((LPCWSTR)IDW_DEMON_FIRE, hInstance, SND_ASYNC | SND_RESOURCE);
 		bullet = new Sprite(bmDemonBullet);
 		bullet->SetSpriteType(ST_ENEMY_BULLET);
-	}		
+	}
+
+	const int bulletPositionX = character->GetSprite()->GetPosition().left + character->GetSprite()->GetWidth() / 2;
+	const int bulletPositionY = character->GetSprite()->GetPosition().top + character->GetSprite()->GetHeight() / 2;
 
 	bullet->SetBoundsAction(BA_DIE);
-
-
-	bullet->SetPosition(character->GetSprite()->GetPosition().left + character->GetSprite()->GetWidth() / 2, character->GetSprite()->GetPosition().top + character->GetSprite()->GetHeight() / 2);
-
-
-	bullet->SetVelocity(character->GetFireDirection());
+	bullet->SetPosition(bulletPositionX, bulletPositionY);
+	bullet->SetVelocity(fireDirection);
 	bullet->SetCharacter(character);
 
 	// Get bullet out of the character first
-	while (bullet->TestCollision(character->GetSprite())) {
+	while (bullet->TestCollision(character->GetSprite())) 
+	{
 		if (bullet->GetVelocity().x==0&&bullet->GetVelocity().y==0)
 		{
 			break;
 		}
 
+		const int bulletPositionX = bullet->GetPosition().left + fireDirection.x;
+		const int bulletPositionY = bullet->GetPosition().top + fireDirection.y;
 
-		bullet->SetPosition(bullet->GetPosition().left + character->GetFireDirection().x, bullet->GetPosition().top + character->GetFireDirection().y);
-
-
+		bullet->SetPosition(bulletPositionX, bulletPositionY);
 	}
+
 	game->AddSprite(bullet);
 }
 
@@ -1480,7 +1610,8 @@ void LoadNextLevel() {
 // Passes selected robot indexes to Robot instances.
 // Assigns robots to players.
 // Creates map.
-void InitializeGameWorld() {
+void InitializeGameWorld() 
+{
 	// Get selected robots IDs, then find the instance
 	// of these robots, and push it to vector which
 	// will be used during gameplay to control robots.
@@ -1492,7 +1623,7 @@ void InitializeGameWorld() {
 
 		if (isSpectating)
 		{
-			SetRobotPositions(*robots[i]);
+			SetRobotPositionsFromClient(*robots[i]);
 		}
 		else
 		{

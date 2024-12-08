@@ -8,19 +8,23 @@
 struct PlayerState
 {
     bool isSpectating = false;
+
     sf::Vector2f position;
     sf::Vector2f allyPosition;
 
+    int shootingRobotIndex = -1;
+    sf::Vector2f fireDirection;
+
     friend sf::Packet& operator<<(sf::Packet& packet, const PlayerState& state)
     {
-        return packet << state.position.x << state.position.y << state.allyPosition.x << state.allyPosition.y 
-            << state.isSpectating;
+        return packet << state.position.x << state.position.y << state.allyPosition.x << state.allyPosition.y
+            << state.isSpectating << state.shootingRobotIndex << state.fireDirection.x << state.fireDirection.y;
     }
 
     friend sf::Packet& operator>>(sf::Packet& packet, PlayerState& state)
     {
-        return packet >> state.position.x >> state.position.y >> state.allyPosition.x >> state.allyPosition.y 
-            >> state.isSpectating;
+        return packet >> state.position.x >> state.position.y >> state.allyPosition.x >> state.allyPosition.y
+            >> state.isSpectating >> state.shootingRobotIndex >> state.fireDirection.x >> state.fireDirection.y;
     }
 };
 

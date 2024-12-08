@@ -1,4 +1,4 @@
-#include "client.h"
+﻿#include "client.h"
 #include <iostream>
 #include <unordered_map>
 #include <thread>
@@ -8,7 +8,7 @@
 GameClient::GameClient(const sf::IpAddress & serverAddress, unsigned short serverPort)
     : serverAddress(serverAddress), serverPort(serverPort), running(true)
 {
-    if (socket.bind(sf::Socket::AnyPort) != sf::Socket::Done) 
+    if (socket.bind(sf::Socket::AnyPort) != sf::Socket::Done)
     {
         std::cerr << "Failed to bind client socket to a port." << std::endl;
     }
@@ -107,11 +107,19 @@ void GameClient::parseGameState(sf::Packet& packet)
         std::string spectaterInfo = state.isSpectating ? "true" : "false";
 
         std::cout << "IP & Port: " << playerId << " Is Spectating?: " << spectaterInfo << std::endl;
+    }
 
-        // Lock the mutex and update the shared data
+    // Lock the mutex and update the shared data
+    {
+        std::lock_guard<std::mutex> lock(dataMutex);
+        sharedGameState = gameState;
+
+        for (const auto& gameData : gameState)
         {
-            std::lock_guard<std::mutex> lock(dataMutex);
-            sharedGameState = gameState;
+            if (localPlayerId == gameData.first)
+            {
+                localPlayerState = gameData.second;
+            }
         }
     }
 }
@@ -119,11 +127,16 @@ void GameClient::parseGameState(sf::Packet& packet)
 void GameClient::setInGameData(const InGameData& inGameData)
 {
     std::lock_guard<std::mutex> lock(dataMutex);
-    auto lkd = socket.getLocalPort();
-
     localPlayerState.isSpectating = inGameData.isSpectating;
     localPlayerState.position = sf::Vector2f(inGameData.playerPosition.x, inGameData.playerPosition.y);
     localPlayerState.allyPosition = sf::Vector2f(inGameData.allyPosition.x, inGameData.allyPosition.y);
+}
+
+void GameClient::setBulletData(const int shootingRobotIndex, const int fireDirectionX, const int fireDirectionY)
+{
+    std::lock_guard<std::mutex> lock(dataMutex);
+    localPlayerState.shootingRobotIndex = shootingRobotIndex;
+    localPlayerState.fireDirection = sf::Vector2f(fireDirectionX, fireDirectionY);
 }
 
 void GameClient::setDataMutex(std::unordered_map<std::string, PlayerState>& gameState)
@@ -156,4 +169,40 @@ const PlayerState& GameClient::getGamerPlayerState(const std::unordered_map<std:
     }
 
     return playerData;
+}
+
+const PlayerState& GameClient::getSpectatorState(const std::unordered_map<std::string, PlayerState>& gameState)
+{
+    std::lock_guard<std::mutex> lock(dataMutex);
+
+    PlayerState playerData;
+
+    for (const auto& gameData : gameState)
+    {
+        const auto& playerId = gameData.first;
+        playerData = gameData.second;
+
+        if (playerId != localPlayerId && playerData.isSpectating)
+        {
+            break;
+        }
+    }
+
+    return playerData;
+}
+
+void GameClient::deletePlayer()
+{
+    std::lock_guard<std::mutex> lock(dataMutex);
+
+    for (const auto& sharedGameData : sharedGameState)
+    {
+        const auto& playerId = sharedGameData.first;
+
+        if (playerId == localPlayerId)
+        {
+            sharedGameState.erase(localPlayerId);
+            return;
+        }
+    }
 }

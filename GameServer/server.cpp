@@ -3,8 +3,8 @@
 
 // Constructor: Initializes the server with the specified port
 GameServer::GameServer(unsigned short port) : port(port) 
-{
-    if (socket.bind(port) != sf::Socket::Done) 
+{ 
+    if (socket.bind(port) != sf::Socket::Done)
     {
         throw std::runtime_error("Failed to bind server to port " + std::to_string(port));
     }
@@ -59,8 +59,10 @@ void GameServer::handleClientInput(sf::Packet& packet, sf::IpAddress sender, uns
 
     if (packet >> state)
     {
+        const auto& clientKey = std::make_pair(sender, senderPort);
+
         // Update the player's state based on their input
-        players[{sender, senderPort}] = state;
+        players[clientKey] = state;
 
         std::cout << "Received input from " << sender << ":" << senderPort
             << " -> Position: (" << state.position.x << ", " << state.position.y << ")"
@@ -76,6 +78,29 @@ void GameServer::handleClientInput(sf::Packet& packet, sf::IpAddress sender, uns
 void GameServer::broadcastGameState()
 {
     sf::Packet statePacket;
+
+    //Check bullet state
+    for (const auto& player : players)
+    {
+        const auto& client = player.first;
+        const auto& state = player.second;
+
+        if (state.shootingRobotIndex == -2)
+        {
+            for (const auto& player : players)
+            {
+                const auto& client = player.first;
+                auto state = player.second;
+                const auto& clientKey = std::make_pair(client.first, client.second);
+
+                state.shootingRobotIndex = -1;
+
+                players[clientKey] = state;
+            }
+
+            break;
+        }
+    }
 
     // Pack the state of all players
     for (const auto& player : players)
