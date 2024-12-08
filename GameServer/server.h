@@ -3,6 +3,10 @@
 #include <SFML/Network.hpp>
 #include <unordered_map>
 #include <string>
+#include <__msvc_chrono.hpp>
+
+// Type for tracking the last received time of each client
+using TimePoint = std::chrono::steady_clock::time_point;
 
 // Player state structure
 struct PlayerState
@@ -118,12 +122,13 @@ public:
     void run();
 
 private:
-    void handleClientInput(sf::Packet& packet, sf::IpAddress sender, unsigned short senderPort);
-    void broadcastGameState();
-
     sf::UdpSocket socket;
     unsigned short port;
     //std::unordered_map<sf::IpAddress, PlayerState, IpAddressHash> players; // Player states
     std::unordered_map<std::pair<sf::IpAddress, unsigned short>, PlayerState, PairHash> players; // Player states
-   
+    std::unordered_map<std::pair<sf::IpAddress, unsigned short>, TimePoint, PairHash> lastActiveTime;
+
+    void handleClientInput(sf::Packet& packet, sf::IpAddress sender, unsigned short senderPort);
+    void broadcastGameState();
+    void checkAlivePlayers();
 };

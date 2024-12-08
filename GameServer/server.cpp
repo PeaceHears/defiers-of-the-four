@@ -24,7 +24,7 @@ void GameServer::run()
 {
     sf::Clock clock;
 
-    while (true) 
+    while (true)
     {
         sf::Time elapsed = clock.restart();
 
@@ -33,12 +33,18 @@ void GameServer::run()
         sf::IpAddress sender;
         unsigned short senderPort;
 
-        while (socket.receive(packet, sender, senderPort) == sf::Socket::Done) 
+        auto receiveStatus = socket.receive(packet, sender, senderPort);
+
+        while (receiveStatus == sf::Socket::Done)
         {
             handleClientInput(packet, sender, senderPort);
+
+            receiveStatus = socket.receive(packet, sender, senderPort);
         }
 
-        // Broadcast the updated game state to all clients
+        checkAlivePlayers();
+
+         // Broadcast the updated game state to all clients
         broadcastGameState();
 
         // Avoid busy-waiting
@@ -63,6 +69,8 @@ void GameServer::handleClientInput(sf::Packet& packet, sf::IpAddress sender, uns
 
         // Update the player's state based on their input
         players[clientKey] = state;
+
+        lastActiveTime[clientKey] = std::chrono::steady_clock::now();
 
         std::cout << "Received input from " << sender << ":" << senderPort
             << " -> Position: (" << state.position.x << ", " << state.position.y << ")"
@@ -111,7 +119,7 @@ void GameServer::broadcastGameState()
         statePacket << client.first.toString() << client.second << state;
     }
 
-    for (const auto& player : players) 
+    for (const auto& player : players)
     {
         const auto& client = player.first;
 
@@ -121,6 +129,29 @@ void GameServer::broadcastGameState()
         if (socket.send(statePacket, client.first, client.second) != sf::Socket::Done) 
         {
             std::cerr << "Failed to send state to " << client.first << ":" << client.second << std::endl;
+        }
+    }
+}
+
+void GameServer::checkAlivePlayers()
+{
+    auto now = std::chrono::steady_clock::now();
+    const auto timeoutThreshold = std::chrono::seconds(2);
+
+    for (auto it = lastActiveTime.begin(); it != lastActiveTime.end();)
+    {
+        if (now - it->second > timeoutThreshold)
+        {
+            const auto& clientKey = it->first;
+            std::cout << "Client " << clientKey.first << ":" << clientKey.second << " timed out.\n";
+
+            // Remove the timed-out client
+            players.erase(clientKey);
+            it = lastActiveTime.erase(it);
+        }
+        else
+        {
+            ++it;
         }
     }
 }
