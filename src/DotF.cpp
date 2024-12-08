@@ -147,29 +147,28 @@ void UpdateClientData()
 	}
 }
 
-PlayerState GetPlayerDataFromClient()
+void SetPlayerDataFromClient(PlayerState& playerState)
 {
 	std::unordered_map<std::string, PlayerState> gameState;
-	PlayerState playerState;
 
 	// Lock the mutex and copy the shared data
 	{
 		game->GetClient().setDataMutex(gameState);
-		playerState = game->GetClient().getGamerPlayerState(gameState);
+		game->GetClient().setGamerPlayerState(gameState, playerState);
 	}
-
-	return playerState;
 }
 
-const std::vector<std::vector<int>>& GetMapFromClient()
+void SetMapFromClient(std::vector<std::vector<int>>& map)
 {
-	PlayerState playerState = GetPlayerDataFromClient();
-	return playerState.map;
+	PlayerState playerState;
+	SetPlayerDataFromClient(playerState);
+	map = playerState.map;
 }
 
 void SetRobotPositionsFromClient(Robot& robot)
 {
-	PlayerState playerState = GetPlayerDataFromClient();
+	PlayerState playerState;
+	SetPlayerDataFromClient(playerState);
 
 	if (robot.GetControlStatus() == ControlStatus::CS_AI)
 	{
@@ -183,7 +182,8 @@ void SetRobotPositionsFromClient(Robot& robot)
 
 void CheckFireFromClient()
 {
-	PlayerState playerState = GetPlayerDataFromClient();
+	PlayerState playerState;
+	SetPlayerDataFromClient(playerState);
 
 	if (playerState.shootingRobotIndex < 0)
 	{
@@ -212,11 +212,12 @@ void CheckFireFromClient()
 
 const POINT& GetFireDirectionFromClient()
 {
-	const auto& playerData = GetPlayerDataFromClient();
+	PlayerState playerState;
+	SetPlayerDataFromClient(playerState);
 
 	POINT fireDirection;
-	fireDirection.x = playerData.fireDirection.x;
-	fireDirection.y = playerData.fireDirection.y;
+	fireDirection.x = playerState.fireDirection.x;
+	fireDirection.y = playerState.fireDirection.y;
 
 	return fireDirection;
 }
@@ -1660,16 +1661,11 @@ void InitializeGameWorld()
 
 		if (isSpectating)
 		{
-			PlayerState playerState = GetPlayerDataFromClient();
-
-			if (playerState.map.empty()) // TODO: Fix this wrong behaviour
+			if (i == 0)
 			{
-				Map newmap = CreateMap(true);
-				maps[i] = newmap;
-			}
-			else
-			{
-				maps[i] = playerState.map;
+				std::vector<std::vector<int>> map;
+				SetMapFromClient(map);
+				maps[i] = map;
 			}
 		}
 		else

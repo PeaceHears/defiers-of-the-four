@@ -157,44 +157,38 @@ void GameClient::setSpectaterInfo(const bool isSpectating)
     localPlayerState.isSpectating = isSpectating;
 }
 
-PlayerState GameClient::getGamerPlayerState(const std::unordered_map<std::string, PlayerState>& gameState)
+void GameClient::setGamerPlayerState(const std::unordered_map<std::string, PlayerState>& gameState, PlayerState& playerState)
 {
     std::lock_guard<std::mutex> lock(dataMutex);
-
-    PlayerState playerData;
 
     for (const auto& gameData : gameState)
     {
         const auto& playerId = gameData.first;
-        playerData = gameData.second;
+        const auto& playerData = gameData.second;
 
         if (playerId != localPlayerId && !playerData.isSpectating)
         {
+            playerState = playerData;
             break;
         }
     }
-
-    return playerData;
 }
 
-PlayerState GameClient::getSpectatorState(const std::unordered_map<std::string, PlayerState>& gameState)
+void GameClient::setSpectatorState(const std::unordered_map<std::string, PlayerState>& gameState, PlayerState& playerState)
 {
     std::lock_guard<std::mutex> lock(dataMutex);
-
-    PlayerState playerData;
 
     for (const auto& gameData : gameState)
     {
         const auto& playerId = gameData.first;
-        playerData = gameData.second;
+        const auto& playerData = gameData.second;
 
         if (playerId != localPlayerId && playerData.isSpectating)
         {
+            playerState = playerData;
             break;
         }
     }
-
-    return playerData;
 }
 
 void GameClient::deletePlayer()

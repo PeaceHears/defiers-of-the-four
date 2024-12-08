@@ -93,8 +93,8 @@ public:
     void setBulletData(const int shootingRobotIndex = -1, const int fireDirectionX = 0, const int fireDirectionY = 0);
     void setDataMutex(std::unordered_map<std::string, PlayerState>& gameState);
     void setSpectaterInfo(const bool isSpectating);
-    PlayerState getGamerPlayerState(const std::unordered_map<std::string, PlayerState>& gameState);
-    PlayerState getSpectatorState(const std::unordered_map<std::string, PlayerState>& gameState);
+    void setGamerPlayerState(const std::unordered_map<std::string, PlayerState>& gameState, PlayerState& playerState);
+    void setSpectatorState(const std::unordered_map<std::string, PlayerState>& gameState, PlayerState& playerState);
     void deletePlayer();
 
 private:
