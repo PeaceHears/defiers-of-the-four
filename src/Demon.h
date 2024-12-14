@@ -69,28 +69,20 @@ public:
 //-----------------------------------------------------------------
 // Demon Class
 //-----------------------------------------------------------------
-class Demon :public Character
+class Demon : public Character
 {
-protected:
-
-	// Member Variables
-	DemonType demonType;
-	int base_number;
-	int base_number_that_warned_by_the_helpless_demon;
-	//vector<Robot*> currentTargets;
-	DemonBase* base;
-
-	// Helper Methods
-	void Free();
-
 public:
 	// Constructor(s)/Destructor
-	Demon(std::string _name, std::string _description, Sprite* _sprite, int _healthPoint, int _speed, POINT _mapPosition, DemonBase* base,
-		int _fireSpeed);
+	Demon(const int _id, std::string _name, std::string _description,
+		Sprite* _sprite, int _healthPoint, int _speed, POINT _mapPosition,
+		DemonBase* base, int _fireSpeed);
 	virtual ~Demon();
 
+	virtual void Update() override;
+
 	// Overload operator
-	bool operator==(const Demon& other) {
+	bool operator==(const Demon& other)
+	{
 		return sprite->GetPosition().left == other.sprite->GetPosition().left
 			&& sprite->GetPosition().top == other.sprite->GetPosition().top
 			&& sprite->GetPosition().right == other.sprite->GetPosition().right
@@ -106,8 +98,8 @@ public:
 	void			Chase(int taskNumber, Demon* demon, Robot* robot, Map currentMap);
 	void			Evade(int taskNumber, Demon* demon, Robot* robot, Map currentMap);
 
-	Robot*			FindTheClosestRobot(Demon* demon, vector<Character*> robots_around_the_demon);
-	DemonBase*		FindTheClosestBase(Demon* demon, DemonBase* _pEnemyBase, vector<DemonBase*> demonBaseArray);
+	Robot* FindTheClosestRobot(Demon* demon, vector<Character*> robots_around_the_demon);
+	DemonBase* FindTheClosestBase(Demon* demon, DemonBase* _pEnemyBase, vector<DemonBase*> demonBaseArray);
 	BOOL			RestrictForTheBaseBoundaries(Demon* demon, POINT dp, Map currentMap);
 
 	// Accessor Methods
@@ -117,13 +109,27 @@ public:
 	void			SetBaseNumberThatWarnedByTheHelplessDemon(int __base_number_that_warned_by_the_helpless_demon) { base_number_that_warned_by_the_helpless_demon = __base_number_that_warned_by_the_helpless_demon; };
 	/*vector<Robot*>	GetCurrentTargets() { return currentTargets; };
 	void			SetCurrentTargets(vector<Robot*> _currentTargets) { currentTargets = _currentTargets; };*/
-	DemonBase*		GetBase() { return base; };
+	DemonBase* GetBase() { return base; };
 	void			SetBase(DemonBase* _base) { base = _base; };
 	DemonType		GetDemonType() { return demonType; };
 
 	int				CoordinateDistance(Coordinate2* c1, Coordinate2* c2);
 	stack<POINT>	FindPathBFS(POINT _src, POINT _dst, Map _currentMap);
 	void			Attack(Demon* demon, GameEngine* game, Bitmap* bmDemonBullet, HINSTANCE hInstance);
-	stack<POINT>	DemonRoam(Demon *_demon, POINT robotposition, POINT baselocation, Map currentmap);
+	stack<POINT>	DemonRoam(Demon* _demon, POINT robotposition, POINT baselocation, Map currentmap);
 
+	const int GetId() const { return id; }
+
+protected:
+
+	// Member Variables
+	int id = 0;
+	DemonType demonType;
+	int base_number;
+	int base_number_that_warned_by_the_helpless_demon;
+	//vector<Robot*> currentTargets;
+	DemonBase* base;
+
+	// Helper Methods
+	void Free();
 };

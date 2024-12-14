@@ -121,7 +121,6 @@ Scene		currentScene;
 //-----------------------------------------------------------------
 string serverIPAddress;
 InGameData inGameData;
-bool isSpectating = false;
 Button* btnStart, *btnBackToPlayers2, *btnSpectate;
 
 //-----------------------------------------------------------------
@@ -142,6 +141,9 @@ time_t			lastHealTime;//for general heal process
 time_t			now;
 bool			fow; // fog of war
 wchar_t			textBuffer[1024];
+
+int demonId = 0;
+std::vector<DemonData> demons;
 
 //-----------------------------------------------------------------
 // Input contorls

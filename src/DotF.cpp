@@ -23,6 +23,8 @@
 //-----------------------------------------------------------------
 BOOL GameInitialize(HINSTANCE _hInstance, const string& ipAddress)
 {
+	isSpectating = false;
+
 	serverIPAddress = ipAddress;
 
 	// Create the game engine
@@ -145,6 +147,26 @@ void UpdateClientData()
 			game->GetClient().setInGameData(inGameData);
 		}
 	}
+
+	for (const auto& demonBase : demonBases)
+	{
+		const auto& currentDemons = demonBase->GetCurrentDemons();
+
+		for (const auto& currentDemon : currentDemons)
+		{
+			for (auto& demon : demons)
+			{
+				if (demon.id == currentDemon->GetId())
+				{
+					demon.position = RectToPoint(currentDemon->GetSprite()->GetPosition());
+				}
+			}
+		}
+	}
+
+	{
+		game->GetClient().setDemonData(demons);
+	}
 }
 
 void SetPlayerDataFromClient(PlayerState& playerState)
@@ -220,6 +242,32 @@ const POINT& GetFireDirectionFromClient()
 	fireDirection.y = playerState.fireDirection.y;
 
 	return fireDirection;
+}
+
+void SetDemonsFromClient(std::vector<DemonData>& demons)
+{
+	PlayerState playerState;
+	SetPlayerDataFromClient(playerState);
+	demons = playerState.demons;
+}
+
+void SetDemonsPositionFromClient()
+{
+	for (const auto& demonBase : demonBases)
+	{
+		const auto& currentDemons = demonBase->GetCurrentDemons();
+
+		for (auto& currentDemon : currentDemons)
+		{
+			for (auto& demon : demons)
+			{
+				if (demon.id == currentDemon->GetId())
+				{
+					currentDemon->GetSprite()->SetPosition(demon.position);
+				}
+			}
+		}
+	}
 }
 
 #pragma endregion CLIENT 
@@ -337,6 +385,7 @@ void GameCycle()
 		if (isSpectating)
 		{
 			CheckFireFromClient();
+
 		}
 	}
 
@@ -860,23 +909,51 @@ void UpdateCharacters() {
 }
 
 // Update demon bases
-void UpdateBases() {
+void UpdateBases()
+{
+	if (isSpectating)
+	{
+		SetDemonsFromClient(demons);
+		SetDemonsPositionFromClient();
+	}
+
 	int numDemons;
-	for (auto &DemonBase : demonBases) {
-		numDemons = DemonBase->GetCurrentDemons().size();
-		if (DemonBase->GetSpawnLimit() == 0) {
-			if (numDemons == 0) {
+
+	for (auto &DemonBase : demonBases)
+	{
+		const auto& currentDemons = DemonBase->GetCurrentDemons();
+
+		numDemons = currentDemons.size();
+
+		if (DemonBase->GetSpawnLimit() == 0)
+		{
+			if (numDemons == 0)
+			{
 				demonBases.erase(remove(demonBases.begin(), demonBases.end(), DemonBase), demonBases.end());
 				//DemonBase->GetSprite()->Kill();
 				//delete DemonBase;
 				continue;
 			}
-		}	
-		else if (numDemons < MAX_ACTIVE_DEMON_PER_BASE && (rand() % 100 < MAX_ACTIVE_DEMON_PER_BASE - numDemons)) {
-			if (DemonBase != NULL) {
+		}
+		else if (isSpectating)
+		{
+			if (numDemons < MAX_ACTIVE_DEMON_PER_BASE)
+			{
+				for (const auto& demon : demons)
+				{
+					if (demon.baseNumber == DemonBase->GetBaseNumber())
+					{
+						AddDemon(DemonBase);
+					}
+				}
+			}
+		}
+		else if (numDemons < MAX_ACTIVE_DEMON_PER_BASE && (rand() % 100 < MAX_ACTIVE_DEMON_PER_BASE - numDemons))
+		{
+			if (DemonBase != NULL)
+			{
 				AddDemon(DemonBase);
 			}
-			
 		}
 	}
 }
@@ -1316,7 +1393,8 @@ void Fire(Character *character, const int robotIndex)
 	game->AddSprite(bullet);
 }
 
-Demon* AddDemon(DemonBase* _base) {
+Demon* AddDemon(DemonBase* _base)
+{
 	// debug
 	swprintf(textBuffer, 20, L"Adddemon start \n");
 	OutputDebugString(textBuffer);
@@ -1332,7 +1410,7 @@ Demon* AddDemon(DemonBase* _base) {
 	demonSprite->SetBounds(bounds);
 	demonSprite->SetBoundsAction(BA_BOUNCE);
 	game->AddSprite(demonSprite);
-	Demon* demon = new Demon({ "Demon" }, { "Demon description" }, demonSprite, 45, 10, { arrayPos.x+1, arrayPos.y }, _base, 10);
+	Demon* demon = new Demon(demonId, { "Demon" }, { "Demon description" }, demonSprite, 45, 10, { arrayPos.x+1, arrayPos.y }, _base, 10);
 	demon->SetBase(_base);
 	demon->SetSpeed(3);
 	demon->SetFireDelay(30);
@@ -1343,16 +1421,34 @@ Demon* AddDemon(DemonBase* _base) {
 	// debug
 	swprintf(textBuffer, 20, L"Adddemon end \n");
 	OutputDebugString(textBuffer);
+
+	DemonData demonData;
+	demonData.id = demonId;
+	demonData.baseNumber = _base->GetBaseNumber();
+	demonData.position = RectToPoint(demonSprite->GetPosition());
+
+	demons.push_back(demonData);
+
+	{
+		game->GetClient().setDemonData(demons);
+	}
+
+	demonId++;
+
 	return demon;
 }
 
-void KillCharacter(Character* _character) {
-	if (_character->IsRobot()) {
+void KillCharacter(Character* _character)
+{
+	if (_character->IsRobot())
+	{
 		Robot *robot = (Robot*)_character;
 
 		// Switch before deleting, if controlled by character
-		if (robot->GetControlStatus() == CS_P1) {
-			if (inGameRobots.size() == 1) {
+		if (robot->GetControlStatus() == CS_P1) 
+		{
+			if (inGameRobots.size() == 1) 
+			{
 				currentScene = MENU_SELECT_PLAYERS;
 				return;
 			}
@@ -1364,9 +1460,12 @@ void KillCharacter(Character* _character) {
 
 		delete robot;
 	}
-	else {
+	else
+	{
 		Demon *demon = (Demon*)_character;
-		if (demon->GetDemonType() == D_DEMON) {
+
+		if (demon->GetDemonType() == D_DEMON)
+		{
 			Sprite *demonExplode = new Sprite(bmDemon1Explosion);
 			demonExplode->SetNumFrames(9, true);
 			demonExplode->SetPosition(demon->GetSprite()->GetPosition());
@@ -1375,20 +1474,36 @@ void KillCharacter(Character* _character) {
 
 			demon->GetBase()->RemoveDemon(demon);
 			demon->GetSprite()->Kill();
+
+			for (int i = 0; i < demons.size(); i++)
+			{
+				if (demons[i].id == demon->GetId())
+				{
+					demons.erase(demons.begin() + i);
+					break;
+				}
+			}
+
+			{
+				game->GetClient().setDemonData(demons);
+			}
+
 			delete demon;
 			currentScore += 5;
 		}
-		else {
+		else
+		{
 			demon->GetSprite()->Kill();
 			delete demonBoss1;
 			currentScore += 100;
 		}
 		
-
-		if (rand() % 2) {
+		if (rand() % 2)
+		{
 			PlaySound((LPCWSTR)IDW_DEMON_DIE_1, hInstance, SND_ASYNC | SND_RESOURCE);
 		}
-		else {
+		else
+		{
 			PlaySound((LPCWSTR)IDW_DEMON_DIE_2, hInstance, SND_ASYNC | SND_RESOURCE);
 		}
 		
@@ -2062,6 +2177,7 @@ void HandleMenuButtonClick(int _x, int _y)
 		else if (btnSpectate->GetSprite()->IsPointInside(_x, _y))
 		{
 			isSpectating = true;
+
 			PlaySound((LPCWSTR)IDW_MENU_CLICK, hInstance, SND_ASYNC | SND_RESOURCE);
 			currentScene = MATCHMAKING;
 

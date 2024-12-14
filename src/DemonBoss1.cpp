@@ -13,7 +13,7 @@
 //-----------------------------------------------------------------
 
 DemonBoss1::DemonBoss1(Sprite * _sprite, POINT _mapPosition)
-	:Demon("Demon Boss 1", "Demon Boss 1", _sprite, 700, 0, _mapPosition, NULL, 10)
+	:Demon(-1, "Demon Boss 1", "Demon Boss 1", _sprite, 700, 0, _mapPosition, NULL, 10)
 {
 	demonType = D_BOSS1;
 	stats.armor = 10;

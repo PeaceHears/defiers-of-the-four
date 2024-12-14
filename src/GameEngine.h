@@ -14,6 +14,7 @@ using namespace std;
 #include <vector>
 #include <string>
 #include "Sprite.h"
+#include "Globals.h"
 
 //-----------------------------------------------------------------
 // Forward Declarations
@@ -117,6 +118,7 @@ public:
 	void      SetFrameRate(int _frameRate) { frameDelay = 1000 / _frameRate; };
 	BOOL      GetSleep() { return sleep; };
 	void      SetSleep(BOOL _sleep) { sleep = _sleep; };
+
 	GameClient& GetClient() { return *client; }
 	void SetClient(GameClient& _client) { client = &_client; }
 

@@ -1,8 +1,6 @@
 #pragma once
 #include <windows.h>
 
-extern bool isSpectating;
-
 struct InGameData
 {
     bool isSpectating = false;

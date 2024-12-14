@@ -125,6 +125,9 @@
     <ClCompile Include="client.cpp">
       <Filter>Network</Filter>
     </ClCompile>
+    <ClCompile Include="Globals.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="DotF.rc">

@@ -130,6 +130,12 @@ void GameClient::setMapData(const std::vector<std::vector<int>>& map)
     localPlayerState.map = map;
 }
 
+void GameClient::setDemonData(const std::vector<DemonData>& demons)
+{
+    std::lock_guard<std::mutex> lock(dataMutex);
+    localPlayerState.demons = demons;
+}
+
 void GameClient::setInGameData(const InGameData& inGameData)
 {
     std::lock_guard<std::mutex> lock(dataMutex);

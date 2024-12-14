@@ -189,6 +189,7 @@
     <ClCompile Include="DemonBoss1.cpp" />
     <ClCompile Include="DotF.cpp" />
     <ClCompile Include="GameEngine.cpp" />
+    <ClCompile Include="Globals.cpp" />
     <ClCompile Include="Robot.cpp" />
     <ClCompile Include="R_Captain.cpp" />
     <ClCompile Include="R_Constrobot.cpp" />

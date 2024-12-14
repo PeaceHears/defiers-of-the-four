@@ -12,10 +12,12 @@
 //-----------------------------------------------------------------
 // Demon Constructor(s)/Destructor
 //-----------------------------------------------------------------
-Demon::Demon(std::string _name, std::string _description, Sprite* _sprite, int _healthPoint, int _speed, POINT _mapPosition,
+Demon::Demon(const int _id, std::string _name, std::string _description, 
+	Sprite* _sprite, int _healthPoint, int _speed, POINT _mapPosition,
 	DemonBase* base, int _fireSpeed)
 	:Character(_name, _description, _sprite, _sprite, _healthPoint, _speed, _mapPosition, _fireSpeed)
 {
+	id = _id;
 	name = _name;
 	description = _description;
 	sprite = _sprite;
@@ -39,9 +41,9 @@ Demon::~Demon()
 //-----------------------------------------------------------------
 // Demon General Methods
 //-----------------------------------------------------------------
-void Character::Update() {
-	if (path.empty()) return;
-	Move();
+void Demon::Update()
+{
+	Character::Update();
 }
 
 void Demon::Situations(Map currentMap, vector<DemonBase*> demonBaseArray, GameEngine* game, Bitmap* bmDemonBullet, HINSTANCE hInstance) {

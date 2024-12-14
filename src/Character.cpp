@@ -12,7 +12,8 @@
 // Character Constructor(s)/Destructor
 //-----------------------------------------------------------------
 Character::Character(string _name, string _description, Sprite* _sprite, Sprite* _menuSprite, 
-	int _healthPoint, int _speed, POINT _mapPosition, int _fireSpeed) {
+	int _healthPoint, int _speed, POINT _mapPosition, int _fireSpeed)
+{
 	name = _name;
 	description = _description;
 	sprite = _sprite;
@@ -54,7 +55,17 @@ void Character::Heal(int _healAmount) {
 	}
 }
 
-void Character::TakeHit(int _damage) { 
+void Character::Update()
+{
+	if (path.empty())
+	{
+		return;
+	}
+
+	Move();
+}
+
+void Character::TakeHit(int _damage) {
 	int absDamage = max(_damage-stats.armor, 0);
 	stats.health -= absDamage;
 	time_t now;
@@ -62,33 +73,44 @@ void Character::TakeHit(int _damage) {
 	if (absDamage > 0) AddStatusMessage({"-" + to_string(absDamage)}, time(&now) + 2, RGB(200, 15, 15));
 };
 
-void Character::Move() {
-	if (path.empty()) return;
+void Character::Move() 
+{
+	if (path.empty())
+	{
+		return;
+	}
 
 	POINT next = (POINT)path.top();
 	POINT current = { sprite->GetPosition().left, sprite->GetPosition().top };
 
 	int dy = next.y - current.y;
 	int dx = next.x - current.x;
+
 	ready = false;
-	if (dx == 0 && dy == 0) {
+
+	if (dx == 0 && dy == 0) 
+	{
 		sprite->SetPosition(next);
 		path.pop();
 		ready = true;
 	}
-	else if (dy != 0 && abs(dy) <= stats.speed) {
+	else if (dy != 0 && abs(dy) <= stats.speed) 
+	{
 		current.y = next.y;
 		sprite->SetPosition(current);
 	}
-	else if (dx != 0 && abs(dx) <= stats.speed) {
+	else if (dx != 0 && abs(dx) <= stats.speed) 
+	{
 		current.x = next.x;
 		sprite->SetPosition(current);
 	}
-	else if (abs(dx) > abs(dy)) {
+	else if (abs(dx) > abs(dy)) 
+	{
 		current.x += stats.speed * (dx / abs(dx));
 		sprite->SetPosition(current);
 	}
-	else {
+	else 
+	{
 		current.y += stats.speed * (dy / abs(dy));
 		sprite->SetPosition(current);
 	}

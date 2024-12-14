@@ -10,9 +10,11 @@
 // Player state structure
 struct PlayerState
 {
+    bool isSpectating = false;
+
     std::vector<std::vector<int>> map;
 
-    bool isSpectating = false;
+    std::vector<DemonData> demons;
 
     sf::Vector2f position;
     sf::Vector2f allyPosition;
@@ -36,6 +38,18 @@ struct PlayerState
             {
                 packet << item;
             }
+        }
+
+        // Serialize the size of the demon positions
+        packet << static_cast<sf::Uint32>(state.demons.size());
+
+        // Serialize each item in the demon positions
+        for (const auto& demon : state.demons)
+        {
+            int demonPositionX = demon.position.x;
+            int demonPositionY = demon.position.y;
+
+            packet << demon.baseNumber << demonPositionX << demonPositionY;
         }
 
         // Serialize player robots values
@@ -72,6 +86,22 @@ struct PlayerState
             }
         }
 
+        sf::Uint32 demonPositionsOuterSize;
+
+        if (packet >> demonPositionsOuterSize)
+        {
+            state.demons.resize(demonPositionsOuterSize);
+
+            // Deserialize each item in the demon positions
+            for (auto& demon : state.demons)
+            {
+                int demonPositionX = demon.position.x;
+                int demonPositionY = demon.position.y;
+
+                packet >> demon.baseNumber >> demonPositionX >> demonPositionY;
+            }
+        }
+
         packet >> state.position.x >> state.position.y >> state.allyPosition.x >> state.allyPosition.y 
             >> state.isSpectating >> state.shootingRobotIndex >> state.fireDirection.x >> state.fireDirection.y;
 
@@ -89,6 +119,7 @@ public:
     void stop(); // Stop the client
 
     void setMapData(const std::vector<std::vector<int>>& map);
+    void setDemonData(const std::vector<DemonData>& demons);
     void setInGameData(const InGameData& inGameData);
     void setBulletData(const int shootingRobotIndex = -1, const int fireDirectionX = 0, const int fireDirectionY = 0);
     void setDataMutex(std::unordered_map<std::string, PlayerState>& gameState);

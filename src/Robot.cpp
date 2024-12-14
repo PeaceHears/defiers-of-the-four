@@ -27,10 +27,15 @@ Robot::~Robot()
 //-----------------------------------------------------------------
 // Robot General Methods
 //-----------------------------------------------------------------
-void Robot::Update() {
-	if (controlStatus != CS_AI) return;
+void Robot::Update() 
+{
+	if (controlStatus != CS_AI)
+	{
+		return;
+	}
 
-	switch (task) {
+	switch (task)
+	{
 	case AT_FOLLOW:
 		if (target == NULL || path.empty()) return;
 		Move();

@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <string>
 #include <__msvc_chrono.hpp>
+#include "Globals.h"
 
 // Type for tracking the last received time of each client
 using TimePoint = std::chrono::steady_clock::time_point;
@@ -11,9 +12,11 @@ using TimePoint = std::chrono::steady_clock::time_point;
 // Player state structure
 struct PlayerState
 {
+    bool isSpectating = false;
+
     std::vector<std::vector<int>> map;
 
-    bool isSpectating = false;
+    std::vector<DemonData> demons;
 
     sf::Vector2f position;
     sf::Vector2f allyPosition;
@@ -37,6 +40,18 @@ struct PlayerState
             {
                 packet << item;
             }
+        }
+
+        // Serialize the size of the demon positions
+        packet << static_cast<sf::Uint32>(state.demons.size());
+
+        // Serialize each item in the demon positions
+        for (const auto& demon : state.demons)
+        {
+            int demonPositionX = demon.position.x;
+            int demonPositionY = demon.position.y;
+
+            packet << demon.baseNumber << demonPositionX << demonPositionY;
         }
 
         // Serialize player robots values
@@ -70,6 +85,22 @@ struct PlayerState
                         packet >> state.map[i][j];
                     }
                 }
+            }
+        }
+
+        sf::Uint32 demonPositionsOuterSize;
+
+        if (packet >> demonPositionsOuterSize)
+        {
+            state.demons.resize(demonPositionsOuterSize);
+
+            // Deserialize each item in the demon positions
+            for (auto& demon : state.demons)
+            {
+                int demonPositionX = demon.position.x;
+                int demonPositionY = demon.position.y;
+
+                packet >> demon.baseNumber >> demonPositionX >> demonPositionY;
             }
         }
 

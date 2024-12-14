@@ -139,6 +139,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Globals.h" />
     <ClInclude Include="server.h" />
   </ItemGroup>
   <ItemGroup>
