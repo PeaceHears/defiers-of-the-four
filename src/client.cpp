@@ -140,6 +140,8 @@ void GameClient::setInGameData(const InGameData& inGameData)
 {
     std::lock_guard<std::mutex> lock(dataMutex);
     localPlayerState.isSpectating = inGameData.isSpectating;
+    localPlayerState.health = inGameData.health;
+    localPlayerState.allyHealth = inGameData.allyHealth;
     localPlayerState.position = sf::Vector2f(inGameData.playerPosition.x, inGameData.playerPosition.y);
     localPlayerState.allyPosition = sf::Vector2f(inGameData.allyPosition.x, inGameData.allyPosition.y);
 }

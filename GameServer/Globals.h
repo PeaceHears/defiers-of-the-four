@@ -12,5 +12,6 @@ struct DemonData
 {
     int id = 0;
     int baseNumber = 0;
+    int health = 0;
     POINT position;
 };

@@ -122,6 +122,7 @@ public:
 	Sprite*	GetSprite() { return sprite; };
 	Sprite*	GetMenuSprite() { return menuSprite; };
 	int	GetHealthPoint() { return stats.health; };
+	void SetHealthPoint(const int health) { stats.health = health; }
 	int	GetMaxHealthPoint() { return stats.maxHealth; };
 	int	GetSpeed() { return stats.speed; };
 	void SetSpeed(int _speed) { stats.speed = _speed; };

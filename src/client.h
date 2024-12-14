@@ -22,6 +22,9 @@ struct PlayerState
     int shootingRobotIndex = -1;
     sf::Vector2f fireDirection;
 
+    int health = 0;
+    int allyHealth = 0;
+
     friend sf::Packet& operator<<(sf::Packet& packet, const PlayerState& state)
     {
         // Serialize the size of the map
@@ -46,15 +49,16 @@ struct PlayerState
         // Serialize each item in the demon positions
         for (const auto& demon : state.demons)
         {
-            int demonPositionX = demon.position.x;
-            int demonPositionY = demon.position.y;
+            sf::Vector2f demonPosition = sf::Vector2f(demon.position.x, demon.position.y);
 
-            packet << demon.baseNumber << demonPositionX << demonPositionY;
+            packet << demon.id << demon.baseNumber << demon.health << demonPosition.x << demonPosition.y;
         }
 
         // Serialize player robots values
-        packet << state.position.x << state.position.y << state.allyPosition.x << state.allyPosition.y 
-            << state.isSpectating << state.shootingRobotIndex << state.fireDirection.x << state.fireDirection.y;
+        packet << state.position.x << state.position.y << state.allyPosition.x << state.allyPosition.y
+            << state.isSpectating <<
+            state.shootingRobotIndex << state.fireDirection.x << state.fireDirection.y <<
+            state.health << state.allyHealth;
 
         return packet;
     }
@@ -95,15 +99,16 @@ struct PlayerState
             // Deserialize each item in the demon positions
             for (auto& demon : state.demons)
             {
-                int demonPositionX = demon.position.x;
-                int demonPositionY = demon.position.y;
+                sf::Vector2f demonPosition = sf::Vector2f(demon.position.x, demon.position.y);
 
-                packet >> demon.baseNumber >> demonPositionX >> demonPositionY;
+                packet >> demon.id >> demon.baseNumber >> demon.health >> demonPosition.x >> demonPosition.y;
             }
         }
 
-        packet >> state.position.x >> state.position.y >> state.allyPosition.x >> state.allyPosition.y 
-            >> state.isSpectating >> state.shootingRobotIndex >> state.fireDirection.x >> state.fireDirection.y;
+        packet >> state.position.x >> state.position.y >> state.allyPosition.x >> state.allyPosition.y
+            >> state.isSpectating >>
+            state.shootingRobotIndex >> state.fireDirection.x >> state.fireDirection.y >>
+            state.health >> state.allyHealth;
 
         return packet;
     }

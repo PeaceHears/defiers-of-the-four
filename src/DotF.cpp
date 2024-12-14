@@ -132,15 +132,18 @@ void UpdateClientData()
 
 	for (const auto& inGameRobot : inGameRobots)
 	{
-		const auto& pos = ScreenRectToArrayPoint(inGameRobot->GetSprite()->GetPosition());
+		const auto& robotHealth = inGameRobot->GetHealthPoint();
+		const auto& robotPosition = ScreenRectToArrayPoint(inGameRobot->GetSprite()->GetPosition());
 
 		if (inGameRobot->GetControlStatus() == ControlStatus::CS_AI)
 		{
-			inGameData.allyPosition = pos;
+			inGameData.allyHealth = robotHealth;
+			inGameData.allyPosition = robotPosition;
 		}
 		else
 		{
-			inGameData.playerPosition = pos;
+			inGameData.health = robotHealth;
+			inGameData.playerPosition = robotPosition;
 		}
 
 		{
@@ -148,16 +151,19 @@ void UpdateClientData()
 		}
 	}
 
+	std::vector<DemonData> localDemons = demons;
+
 	for (const auto& demonBase : demonBases)
 	{
 		const auto& currentDemons = demonBase->GetCurrentDemons();
 
 		for (const auto& currentDemon : currentDemons)
 		{
-			for (auto& demon : demons)
+			for (auto& demon : localDemons)
 			{
 				if (demon.id == currentDemon->GetId())
 				{
+					demon.health = currentDemon->GetHealthPoint();
 					demon.position = RectToPoint(currentDemon->GetSprite()->GetPosition());
 				}
 			}
@@ -165,7 +171,7 @@ void UpdateClientData()
 	}
 
 	{
-		game->GetClient().setDemonData(demons);
+		game->GetClient().setDemonData(localDemons);
 	}
 }
 
@@ -187,17 +193,19 @@ void SetMapFromClient(std::vector<std::vector<int>>& map)
 	map = playerState.map;
 }
 
-void SetRobotPositionsFromClient(Robot& robot)
+void SetRobotsFromClient(Robot& robot)
 {
 	PlayerState playerState;
 	SetPlayerDataFromClient(playerState);
 
 	if (robot.GetControlStatus() == ControlStatus::CS_AI)
 	{
+		robot.SetHealthPoint(playerState.allyHealth);
 		robot.GetSprite()->SetPosition(playerState.allyPosition.x * 32, playerState.allyPosition.y * 32);
 	}
 	else
 	{
+		robot.SetHealthPoint(playerState.health);
 		robot.GetSprite()->SetPosition(playerState.position.x * 32, playerState.position.y * 32);
 	}
 }
@@ -251,7 +259,46 @@ void SetDemonsFromClient(std::vector<DemonData>& demons)
 	demons = playerState.demons;
 }
 
-void SetDemonsPositionFromClient()
+void CheckDeadDemonsFromClient()
+{
+	bool isDemonDead = false;
+	int demonIndex = 0;
+	int checkedDemonIndex = 0;
+
+	for (const auto& demonBase : demonBases)
+	{
+		const auto& currentDemons = demonBase->GetCurrentDemons();
+
+		for (auto& currentDemon : currentDemons)
+		{
+			isDemonDead = false;
+			demonIndex = 0;
+			checkedDemonIndex = 0;
+
+			for (const auto& demon : demons)
+			{
+				if (demon.id != currentDemon->GetId())
+				{
+					checkedDemonIndex++;
+				}
+
+				demonIndex++;
+
+				if (demonIndex == demons.size() && demonIndex == checkedDemonIndex)
+				{
+					isDemonDead = true;
+				}
+			}
+
+			if (isDemonDead)
+			{
+				KillCharacter(currentDemon);
+			}
+		}
+	}
+}
+
+void SetInGameDemonsFromClient(const std::vector<DemonData>& demons)
 {
 	for (const auto& demonBase : demonBases)
 	{
@@ -259,15 +306,29 @@ void SetDemonsPositionFromClient()
 
 		for (auto& currentDemon : currentDemons)
 		{
-			for (auto& demon : demons)
+			for (const auto& demon : demons)
 			{
 				if (demon.id == currentDemon->GetId())
 				{
-					currentDemon->GetSprite()->SetPosition(demon.position);
+					currentDemon->SetHealthPoint(demon.health);
+					//currentDemon->GetSprite()->SetPosition(demon.position);
 				}
 			}
 		}
 	}
+
+	CheckDeadDemonsFromClient();
+}
+
+void UpdateDemonsFromClient()
+{
+	std::vector<DemonData> localDemons;
+
+	SetDemonsFromClient(demons);
+
+	localDemons = demons;
+
+	SetInGameDemonsFromClient(localDemons);
 }
 
 #pragma endregion CLIENT 
@@ -335,17 +396,21 @@ void GamePaint(HDC _hDC)
 		game->DrawSprites(_hDC);
 		DrawRightMenu(_hDC);
 
-		for (auto &Robot : inGameRobots) {
+		for (auto &Robot : inGameRobots)
+		{
 			DrawIndicators(_hDC, Robot);
 		}
 
-		for (auto &DemonBase : demonBases) {
-			for (auto &Demon : DemonBase->GetCurrentDemons()) {
-				DrawIndicators(_hDC, Demon);
+		for (auto &DemonBase : demonBases)
+		{
+			for (auto &currentDemon : DemonBase->GetCurrentDemons())
+			{
+				DrawIndicators(_hDC, currentDemon);
 			}
 		}
 
-		if (demonBoss1 != NULL) {
+		if (demonBoss1 != NULL)
+		{
 			DrawIndicators(_hDC, demonBoss1);
 		}
 
@@ -385,7 +450,7 @@ void GameCycle()
 		if (isSpectating)
 		{
 			CheckFireFromClient();
-
+			UpdateDemonsFromClient();
 		}
 	}
 
@@ -652,7 +717,7 @@ void UpdateCharacters() {
 	{
 		if (isSpectating)
 		{
-			SetRobotPositionsFromClient(*Robot);
+			SetRobotsFromClient(*Robot);
 		}
 
 		pos = ScreenRectToArrayPoint(Robot->GetSprite()->GetPosition());
@@ -845,7 +910,7 @@ void UpdateCharacters() {
 			// Robo cap passive to boost nearby ally stats
 			for (auto &nearbyRobot : robot->GetNearbyRobots()) {
 				/// if (((Robot*)nearbyRobot)->GetRobotType() != R_CAPTAIN)
-					 nearbyRobot->BoostStats(20);
+					 nearbyRobot->BoostStats(20); //TODO: Add to client data
 			}
 
 			// Robo cap check self ability 2 expiration
@@ -911,12 +976,6 @@ void UpdateCharacters() {
 // Update demon bases
 void UpdateBases()
 {
-	if (isSpectating)
-	{
-		SetDemonsFromClient(demons);
-		SetDemonsPositionFromClient();
-	}
-
 	int numDemons;
 
 	for (auto &DemonBase : demonBases)
@@ -1429,8 +1488,10 @@ Demon* AddDemon(DemonBase* _base)
 
 	demons.push_back(demonData);
 
+	std::vector<DemonData> localDemons = demons;
+
 	{
-		game->GetClient().setDemonData(demons);
+		game->GetClient().setDemonData(localDemons);
 	}
 
 	demonId++;
@@ -1484,8 +1545,10 @@ void KillCharacter(Character* _character)
 				}
 			}
 
+			std::vector<DemonData> localDemons = demons;
+
 			{
-				game->GetClient().setDemonData(demons);
+				game->GetClient().setDemonData(localDemons);
 			}
 
 			delete demon;
@@ -1742,16 +1805,7 @@ void InitializeGameWorld()
 	for (auto i : selectedRobotIndexes) 
 	{
 		inGameRobots.push_back(robots[i]);
-
-		if (isSpectating)
-		{
-			SetRobotPositionsFromClient(*robots[i]);
-		}
-		else
-		{
-			robots[i]->GetSprite()->SetPosition((14 + 2 * i) * 32, 23 * 32);
-		}
-
+		robots[i]->GetSprite()->SetPosition((14 + 2 * i) * 32, 23 * 32);
 		robots[i]->GetSprite()->SetZOrder(10);
 		game->AddSprite(robots[i]->GetSprite());
 	}
@@ -2296,7 +2350,7 @@ void HandleMenuButtonHover(int _x, int _y)
 //-----------------------------------------------------------------
 
 // Draws indicatiors in game play scene.
-void DrawIndicators(HDC _hDC, Character* _character) 
+void DrawIndicators(HDC _hDC, Character* _character)
 {
 	if (_character->GetSprite()->IsHidden()) return; // won't draw indicators for hidden sprites
 

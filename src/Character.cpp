@@ -7,6 +7,7 @@
 // Include Files
 //-----------------------------------------------------------------
 #include "Character.h"
+#include "Globals.h"
 
 //-----------------------------------------------------------------
 // Character Constructor(s)/Destructor
@@ -57,7 +58,7 @@ void Character::Heal(int _healAmount) {
 
 void Character::Update()
 {
-	if (path.empty())
+	if (path.empty() /*|| isSpectating*/)
 	{
 		return;
 	}
