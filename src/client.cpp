@@ -144,22 +144,22 @@ void GameClient::setInGameData(const InGameData& inGameData)
     localPlayerState.isSpectating = inGameData.isSpectating;
     localPlayerState.health = inGameData.health;
     localPlayerState.allyHealth = inGameData.allyHealth;
-    localPlayerState.position = sf::Vector2f(inGameData.playerPosition.x, inGameData.playerPosition.y);
-    localPlayerState.allyPosition = sf::Vector2f(inGameData.allyPosition.x, inGameData.allyPosition.y);
+    localPlayerState.position = sf::Vector2i(inGameData.playerPosition.x, inGameData.playerPosition.y);
+    localPlayerState.allyPosition = sf::Vector2i(inGameData.allyPosition.x, inGameData.allyPosition.y);
 }
 
 void GameClient::setBulletData(const int shootingRobotIndex, const int fireDirectionX, const int fireDirectionY)
 {
     std::lock_guard<std::mutex> lock(dataMutex);
     localPlayerState.shootingRobotIndex = shootingRobotIndex;
-    localPlayerState.fireDirection = sf::Vector2f(fireDirectionX, fireDirectionY);
+    localPlayerState.fireDirection = sf::Vector2i(fireDirectionX, fireDirectionY);
 }
 
 void GameClient::setAllyBulletData(const int shootingAllyRobotIndex, const int allyFireDirectionX, const int allyFireDirectionY)
 {
     std::lock_guard<std::mutex> lock(dataMutex);
     localPlayerState.shootingAllyRobotIndex = shootingAllyRobotIndex;
-    localPlayerState.allyFireDirection = sf::Vector2f(allyFireDirectionX, allyFireDirectionY);
+    localPlayerState.allyFireDirection = sf::Vector2i(allyFireDirectionX, allyFireDirectionY);
 }
 
 void GameClient::setDataMutex(std::unordered_map<std::string, PlayerState>& gameState)

@@ -16,13 +16,13 @@ struct PlayerState
 
     std::vector<DemonData> demons;
 
-    sf::Vector2f position;
-    sf::Vector2f allyPosition;
+    sf::Vector2i position;
+    sf::Vector2i allyPosition;
 
     int shootingRobotIndex = -1;
-    sf::Vector2f fireDirection;
+    sf::Vector2i fireDirection;
     int shootingAllyRobotIndex = -1;
-    sf::Vector2f allyFireDirection;
+    sf::Vector2i allyFireDirection;
 
     int health = 0;
     int allyHealth = 0;
@@ -51,7 +51,7 @@ struct PlayerState
         // Serialize each item in the demon positions
         for (const auto& demon : state.demons)
         {
-            sf::Vector2f demonPosition = sf::Vector2f(demon.position.x, demon.position.y);
+            sf::Vector2i demonPosition = sf::Vector2i(demon.position.x, demon.position.y);
 
             packet << demon.id << demon.baseNumber << demon.health << demonPosition.x << demonPosition.y;
         }
@@ -102,7 +102,7 @@ struct PlayerState
             // Deserialize each item in the demon positions
             for (auto& demon : state.demons)
             {
-                sf::Vector2f demonPosition = sf::Vector2f(demon.position.x, demon.position.y);
+                sf::Vector2i demonPosition = sf::Vector2i(demon.position.x, demon.position.y);
 
                 packet >> demon.id >> demon.baseNumber >> demon.health >> demonPosition.x >> demonPosition.y;
             }
