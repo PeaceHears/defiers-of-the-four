@@ -136,8 +136,6 @@ public:
     void setDataMutex(std::unordered_map<std::string, PlayerState>& gameState);
     void setSpectaterInfo(const bool isSpectating);
     void setGamerPlayerState(const std::unordered_map<std::string, PlayerState>& gameState, PlayerState& playerState);
-    void setSpectatorState(const std::unordered_map<std::string, PlayerState>& gameState, PlayerState& playerState);
-    void deletePlayer();
 
 private:
     void sendInput();
