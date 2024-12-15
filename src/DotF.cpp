@@ -133,7 +133,7 @@ void UpdateClientData()
 	for (const auto& inGameRobot : inGameRobots)
 	{
 		const auto& robotHealth = inGameRobot->GetHealthPoint();
-		const auto& robotPosition = ScreenRectToArrayPoint(inGameRobot->GetSprite()->GetPosition());
+		const auto& robotPosition = RectToPoint(inGameRobot->GetSprite()->GetPosition());
 
 		if (inGameRobot->GetControlStatus() == ControlStatus::CS_AI)
 		{
@@ -201,12 +201,12 @@ void SetRobotsFromClient(Robot& robot)
 	if (robot.GetControlStatus() == ControlStatus::CS_AI)
 	{
 		robot.SetHealthPoint(playerState.allyHealth);
-		robot.GetSprite()->SetPosition(playerState.allyPosition.x * 32, playerState.allyPosition.y * 32);
+		robot.GetSprite()->SetPosition(playerState.allyPosition.x, playerState.allyPosition.y);
 	}
 	else
 	{
 		robot.SetHealthPoint(playerState.health);
-		robot.GetSprite()->SetPosition(playerState.position.x * 32, playerState.position.y * 32);
+		robot.GetSprite()->SetPosition(playerState.position.x, playerState.position.y);
 	}
 }
 
