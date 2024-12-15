@@ -128,98 +128,118 @@ void GameClient::parseGameState(sf::Packet& packet)
 
 void GameClient::setMapData(const std::vector<std::vector<int>>& map)
 {
-    std::lock_guard<std::mutex> lock(dataMutex);
-    localPlayerState.map = map;
+    {
+        std::lock_guard<std::mutex> lock(dataMutex);
+        localPlayerState.map = map;
+    }
 }
 
 void GameClient::setDemonData(const std::vector<DemonData>& demons)
 {
-    std::lock_guard<std::mutex> lock(dataMutex);
-    localPlayerState.demons = demons;
+    {
+        std::lock_guard<std::mutex> lock(dataMutex);
+        localPlayerState.demons = demons;
+    }
 }
 
 void GameClient::setInGameData(const InGameData& inGameData)
 {
-    std::lock_guard<std::mutex> lock(dataMutex);
-    localPlayerState.isSpectating = inGameData.isSpectating;
-    localPlayerState.health = inGameData.health;
-    localPlayerState.allyHealth = inGameData.allyHealth;
-    localPlayerState.position = sf::Vector2i(inGameData.playerPosition.x, inGameData.playerPosition.y);
-    localPlayerState.allyPosition = sf::Vector2i(inGameData.allyPosition.x, inGameData.allyPosition.y);
+    {
+        std::lock_guard<std::mutex> lock(dataMutex);
+        localPlayerState.isSpectating = inGameData.isSpectating;
+        localPlayerState.health = inGameData.health;
+        localPlayerState.allyHealth = inGameData.allyHealth;
+        localPlayerState.position = sf::Vector2i(inGameData.playerPosition.x, inGameData.playerPosition.y);
+        localPlayerState.allyPosition = sf::Vector2i(inGameData.allyPosition.x, inGameData.allyPosition.y);
+    }
 }
 
 void GameClient::setBulletData(const int shootingRobotIndex, const int fireDirectionX, const int fireDirectionY)
 {
-    std::lock_guard<std::mutex> lock(dataMutex);
-    localPlayerState.shootingRobotIndex = shootingRobotIndex;
-    localPlayerState.fireDirection = sf::Vector2i(fireDirectionX, fireDirectionY);
+    {
+        std::lock_guard<std::mutex> lock(dataMutex);
+        localPlayerState.shootingRobotIndex = shootingRobotIndex;
+        localPlayerState.fireDirection = sf::Vector2i(fireDirectionX, fireDirectionY);
+    }
 }
 
 void GameClient::setAllyBulletData(const int shootingAllyRobotIndex, const int allyFireDirectionX, const int allyFireDirectionY)
 {
-    std::lock_guard<std::mutex> lock(dataMutex);
-    localPlayerState.shootingAllyRobotIndex = shootingAllyRobotIndex;
-    localPlayerState.allyFireDirection = sf::Vector2i(allyFireDirectionX, allyFireDirectionY);
+    {
+        std::lock_guard<std::mutex> lock(dataMutex);
+        localPlayerState.shootingAllyRobotIndex = shootingAllyRobotIndex;
+        localPlayerState.allyFireDirection = sf::Vector2i(allyFireDirectionX, allyFireDirectionY);
+    }
 }
 
 void GameClient::setDataMutex(std::unordered_map<std::string, PlayerState>& gameState)
 {
-    std::lock_guard<std::mutex> lock(dataMutex);
-    gameState = sharedGameState;
+    {
+        std::lock_guard<std::mutex> lock(dataMutex);
+        gameState = sharedGameState;
+    }
 }
 
 void GameClient::setSpectaterInfo(const bool isSpectating)
 {
-    std::lock_guard<std::mutex> lock(dataMutex);
-    localPlayerState.isSpectating = isSpectating;
+    {
+        std::lock_guard<std::mutex> lock(dataMutex);
+        localPlayerState.isSpectating = isSpectating;
+    }
 }
 
 void GameClient::setGamerPlayerState(const std::unordered_map<std::string, PlayerState>& gameState, PlayerState& playerState)
 {
-    std::lock_guard<std::mutex> lock(dataMutex);
-
-    for (const auto& gameData : gameState)
     {
-        const auto& playerId = gameData.first;
-        const auto& playerData = gameData.second;
+        std::lock_guard<std::mutex> lock(dataMutex);
 
-        if (playerId != localPlayerId && !playerData.isSpectating)
+        for (const auto& gameData : gameState)
         {
-            playerState = playerData;
-            break;
+            const auto& playerId = gameData.first;
+            const auto& playerData = gameData.second;
+
+            if (playerId != localPlayerId && !playerData.isSpectating)
+            {
+                playerState = playerData;
+                break;
+            }
         }
     }
 }
 
 void GameClient::setSpectatorState(const std::unordered_map<std::string, PlayerState>& gameState, PlayerState& playerState)
 {
-    std::lock_guard<std::mutex> lock(dataMutex);
-
-    for (const auto& gameData : gameState)
     {
-        const auto& playerId = gameData.first;
-        const auto& playerData = gameData.second;
+        std::lock_guard<std::mutex> lock(dataMutex);
 
-        if (playerId != localPlayerId && playerData.isSpectating)
+        for (const auto& gameData : gameState)
         {
-            playerState = playerData;
-            break;
+            const auto& playerId = gameData.first;
+            const auto& playerData = gameData.second;
+
+            if (playerId != localPlayerId && playerData.isSpectating)
+            {
+                playerState = playerData;
+                break;
+            }
         }
     }
 }
 
 void GameClient::deletePlayer()
 {
-    std::lock_guard<std::mutex> lock(dataMutex);
-
-    for (const auto& sharedGameData : sharedGameState)
     {
-        const auto& playerId = sharedGameData.first;
+        std::lock_guard<std::mutex> lock(dataMutex);
 
-        if (playerId == localPlayerId)
+        for (const auto& sharedGameData : sharedGameState)
         {
-            sharedGameState.erase(localPlayerId);
-            return;
+            const auto& playerId = sharedGameData.first;
+
+            if (playerId == localPlayerId)
+            {
+                sharedGameState.erase(localPlayerId);
+                return;
+            }
         }
     }
 }

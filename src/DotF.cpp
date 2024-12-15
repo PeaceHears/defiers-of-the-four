@@ -146,9 +146,7 @@ void UpdateClientData()
 			inGameData.playerPosition = robotPosition;
 		}
 
-		{
-			game->GetClient().setInGameData(inGameData);
-		}
+		game->GetClient().setInGameData(inGameData);
 	}
 
 	std::vector<DemonData> localDemons = demons;
@@ -170,9 +168,7 @@ void UpdateClientData()
 		}
 	}
 
-	{
-		game->GetClient().setDemonData(localDemons);
-	}
+	game->GetClient().setDemonData(localDemons);
 }
 
 void SetPlayerDataFromClient(PlayerState& playerState)
@@ -180,10 +176,8 @@ void SetPlayerDataFromClient(PlayerState& playerState)
 	std::unordered_map<std::string, PlayerState> gameState;
 
 	// Lock the mutex and copy the shared data
-	{
-		game->GetClient().setDataMutex(gameState);
-		game->GetClient().setGamerPlayerState(gameState, playerState);
-	}
+	game->GetClient().setDataMutex(gameState);
+	game->GetClient().setGamerPlayerState(gameState, playerState);
 }
 
 void SetMapFromClient(std::vector<std::vector<int>>& map)
@@ -240,9 +234,7 @@ void CheckFireFromClient()
 		{
 			Fire(robot);
 
-			{
-				game->GetClient().setBulletData(-2);
-			}
+			game->GetClient().setBulletData(-2);
 
 			break;
 		}
@@ -251,9 +243,7 @@ void CheckFireFromClient()
 		{
 			Fire(robot);
 
-			{
-				game->GetClient().setAllyBulletData(-2);
-			}
+			game->GetClient().setAllyBulletData(-2);
 
 			break;
 		}
@@ -1457,15 +1447,11 @@ void Fire(Character *character, const int robotIndex)
 		{
 			if (((Robot*)character)->GetControlStatus() == CS_AI)
 			{
-				{
-					game->GetClient().setAllyBulletData(robotIndex, fireDirection.x, fireDirection.y);
-				}
+				game->GetClient().setAllyBulletData(robotIndex, fireDirection.x, fireDirection.y);
 			}
 			else
 			{
-				{
-					game->GetClient().setBulletData(robotIndex, fireDirection.x, fireDirection.y);
-				}
+				game->GetClient().setBulletData(robotIndex, fireDirection.x, fireDirection.y);
 			}
 		}
 	}
@@ -1539,9 +1525,7 @@ Demon* AddDemon(DemonBase* _base)
 
 	std::vector<DemonData> localDemons = demons;
 
-	{
-		game->GetClient().setDemonData(localDemons);
-	}
+	game->GetClient().setDemonData(localDemons);
 
 	demonId++;
 
@@ -1596,9 +1580,7 @@ void KillCharacter(Character* _character)
 
 			std::vector<DemonData> localDemons = demons;
 
-			{
-				game->GetClient().setDemonData(localDemons);
-			}
+			game->GetClient().setDemonData(localDemons);
 
 			delete demon;
 			currentScore += 5;
@@ -1893,9 +1875,7 @@ void InitializeGameWorld()
 
 			if (i == 0)
 			{
-				{
-					game->GetClient().setMapData(newmap);
-				}
+				game->GetClient().setMapData(newmap);
 			}
 		}
 	}
@@ -2284,9 +2264,7 @@ void HandleMenuButtonClick(int _x, int _y)
 			PlaySound((LPCWSTR)IDW_MENU_CLICK, hInstance, SND_ASYNC | SND_RESOURCE);
 			currentScene = MATCHMAKING;
 
-			{
-				game->GetClient().setSpectaterInfo(isSpectating);
-			}
+			game->GetClient().setSpectaterInfo(isSpectating);
 		}
 
 		// Button click - Back
