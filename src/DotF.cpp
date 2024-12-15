@@ -226,7 +226,6 @@ void CheckFireFromClient()
 	{
 		if (robotIndex == playerState.shootingRobotIndex)
 		{
-			//TODO: You're already doing this for AI robots, so this is unnecessary for them
 			Fire(robot);
 
 			{
@@ -888,9 +887,8 @@ void UpdateCharacters() {
 					else
 					{
 						robot->SetFireDirection(target);
+						Fire(robot, robotIndex);
 					}
-
-					Fire(robot, robotIndex);
 				}
 				// evade
 				else if (roll == 1) 
