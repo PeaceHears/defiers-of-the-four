@@ -1084,6 +1084,11 @@ void CreateRobots(HDC _hDC) {
 // Handles Player 1's key controls, only in game play scene.
 void Player1Controls() 
 {
+	if (isSpectating)
+	{
+		return;
+	}
+
 	int robotIndex = 0;
 
 	Robot *robot = GetPlayersRobot(1, robotIndex);
@@ -1210,6 +1215,11 @@ void Player1Controls()
 // Handles Player 2's key controls, only in game play scene.
 void Player2Controls() 
 {
+	if (isSpectating)
+	{
+		return;
+	}
+
 	int robotIndex = 0;
 
 	Robot *robot = GetPlayersRobot(2, robotIndex);

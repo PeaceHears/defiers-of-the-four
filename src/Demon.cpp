@@ -553,7 +553,12 @@ int Demon::CoordinateDistance(Coordinate2 *c1, Coordinate2 *c2) {
 }
 
 // Fire from a character
-void Demon::Attack(Demon* demon, GameEngine* game, Bitmap* bmDemonBullet, HINSTANCE  hInstance) {
+void Demon::Attack(Demon* demon, GameEngine* game, Bitmap* bmDemonBullet, HINSTANCE  hInstance)
+{
+	if (isSpectating)
+	{
+		return;
+	}
 
 	if (demon->GetCurFireDelay() < demon->GetFireDelay()) return;
 	demon->SetCurFireDelay(0);
