@@ -18,16 +18,16 @@ struct PlayerState
 
     std::vector<DemonData> demons;
 
-    sf::Vector2i position;
-    sf::Vector2i allyPosition;
+    sf::Vector2i position = sf::Vector2i(-1, -1);
+    sf::Vector2i allyPosition = sf::Vector2i(-1, -1);
 
     int shootingRobotIndex = -1;
-    sf::Vector2i fireDirection;
+    sf::Vector2i fireDirection = sf::Vector2i(-1, -1);
     int shootingAllyRobotIndex = -1;
-    sf::Vector2i allyFireDirection;
+    sf::Vector2i allyFireDirection = sf::Vector2i(-1, -1);
 
-    int health = 0;
-    int allyHealth = 0;
+    int health = -1;
+    int allyHealth = -1;
 
     friend sf::Packet& operator<<(sf::Packet& packet, const PlayerState& state)
     {

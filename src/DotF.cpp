@@ -198,20 +198,29 @@ void SetRobotsFromClient(Robot& robot)
 	PlayerState playerState;
 	SetPlayerDataFromClient(playerState);
 
+	// TODO: Sometimes it resets itself into initial state but it shouldn't. 
+	// We've done workaround by checking reset state with -1, but we shouldn't
+
 	if (robot.GetControlStatus() == ControlStatus::CS_AI)
 	{
-		robot.SetHealthPoint(playerState.allyHealth);
+		if (playerState.allyHealth != -1)
+		{
+			robot.SetHealthPoint(playerState.allyHealth);
+		}
 
-		if (playerState.allyPosition.x != 0 || playerState.allyPosition.y != 0)
+		if (playerState.allyPosition.x != -1 || playerState.allyPosition.y != -1)
 		{
 			robot.GetSprite()->SetPosition(playerState.allyPosition.x, playerState.allyPosition.y);
 		}
 	}
 	else
 	{
-		robot.SetHealthPoint(playerState.health);
+		if (playerState.health != -1)
+		{
+			robot.SetHealthPoint(playerState.health);
+		}
 
-		if (playerState.position.x != 0 || playerState.position.y != 0)
+		if (playerState.position.x != -1 || playerState.position.y != -1)
 		{
 			robot.GetSprite()->SetPosition(playerState.position.x, playerState.position.y);
 		}
