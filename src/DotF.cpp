@@ -316,7 +316,7 @@ void SetInGameDemonsFromClient(const std::vector<DemonData>& demons)
 		}
 	}
 
-	CheckDeadDemonsFromClient();
+	//CheckDeadDemonsFromClient();
 }
 
 void UpdateDemonsFromClient()
