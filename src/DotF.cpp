@@ -470,6 +470,8 @@ void GameCycle()
 
 		if (isSpectating)
 		{
+			//TODO: Update map
+
 			CheckFireFromClient();
 			UpdateDemonsFromClient();
 		}
