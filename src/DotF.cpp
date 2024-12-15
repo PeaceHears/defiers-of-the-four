@@ -201,12 +201,20 @@ void SetRobotsFromClient(Robot& robot)
 	if (robot.GetControlStatus() == ControlStatus::CS_AI)
 	{
 		robot.SetHealthPoint(playerState.allyHealth);
-		robot.GetSprite()->SetPosition(playerState.allyPosition.x, playerState.allyPosition.y);
+
+		if (playerState.allyPosition.x != 0 || playerState.allyPosition.y != 0)
+		{
+			robot.GetSprite()->SetPosition(playerState.allyPosition.x, playerState.allyPosition.y);
+		}
 	}
 	else
 	{
 		robot.SetHealthPoint(playerState.health);
-		robot.GetSprite()->SetPosition(playerState.position.x, playerState.position.y);
+
+		if (playerState.position.x != 0 || playerState.position.y != 0)
+		{
+			robot.GetSprite()->SetPosition(playerState.position.x, playerState.position.y);
+		}
 	}
 }
 
