@@ -88,6 +88,9 @@ void GameServer::broadcastGameState()
     sf::Packet statePacket;
 
     //Check bullet state
+    // 
+    // TODO: This can be the cause of resetting PlayerState
+
     for (const auto& player : players)
     {
         const auto& previousState = player.second;
