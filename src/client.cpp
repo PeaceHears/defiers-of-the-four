@@ -118,7 +118,9 @@ void GameClient::parseGameState(sf::Packet& packet)
         {
             if (localPlayerId == gameData.first)
             {
+                // To fix unnecessary shoots
                 localPlayerState.shootingRobotIndex = gameData.second.shootingRobotIndex;
+                localPlayerState.shootingAllyRobotIndex = gameData.second.shootingAllyRobotIndex;
             }
         }
     }
@@ -151,6 +153,13 @@ void GameClient::setBulletData(const int shootingRobotIndex, const int fireDirec
     std::lock_guard<std::mutex> lock(dataMutex);
     localPlayerState.shootingRobotIndex = shootingRobotIndex;
     localPlayerState.fireDirection = sf::Vector2f(fireDirectionX, fireDirectionY);
+}
+
+void GameClient::setAllyBulletData(const int shootingAllyRobotIndex, const int allyFireDirectionX, const int allyFireDirectionY)
+{
+    std::lock_guard<std::mutex> lock(dataMutex);
+    localPlayerState.shootingAllyRobotIndex = shootingAllyRobotIndex;
+    localPlayerState.allyFireDirection = sf::Vector2f(allyFireDirectionX, allyFireDirectionY);
 }
 
 void GameClient::setDataMutex(std::unordered_map<std::string, PlayerState>& gameState)

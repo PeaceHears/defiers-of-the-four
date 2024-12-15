@@ -23,6 +23,8 @@ struct PlayerState
 
     int shootingRobotIndex = -1;
     sf::Vector2f fireDirection;
+    int shootingAllyRobotIndex = -1;
+    sf::Vector2f allyFireDirection;
 
     int health = 0;
     int allyHealth = 0;
@@ -60,6 +62,7 @@ struct PlayerState
         packet << state.position.x << state.position.y << state.allyPosition.x << state.allyPosition.y
             << state.isSpectating <<
             state.shootingRobotIndex << state.fireDirection.x << state.fireDirection.y <<
+            state.shootingAllyRobotIndex << state.allyFireDirection.x << state.allyFireDirection.y <<
             state.health << state.allyHealth;
 
         return packet;
@@ -110,6 +113,7 @@ struct PlayerState
         packet >> state.position.x >> state.position.y >> state.allyPosition.x >> state.allyPosition.y
             >> state.isSpectating >>
             state.shootingRobotIndex >> state.fireDirection.x >> state.fireDirection.y >>
+            state.shootingAllyRobotIndex >> state.allyFireDirection.x >> state.allyFireDirection.y >>
             state.health >> state.allyHealth;
 
         return packet;

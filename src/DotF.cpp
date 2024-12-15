@@ -215,16 +215,11 @@ void CheckFireFromClient()
 	PlayerState playerState;
 	SetPlayerDataFromClient(playerState);
 
-	if (playerState.shootingRobotIndex < 0)
-	{
-		return;
-	}
-
 	int robotIndex = 0;
 
 	for (const auto& robot : inGameRobots)
 	{
-		if (robotIndex == playerState.shootingRobotIndex)
+		if (playerState.shootingRobotIndex > -1 && robotIndex == playerState.shootingRobotIndex)
 		{
 			Fire(robot);
 
@@ -235,18 +230,38 @@ void CheckFireFromClient()
 			break;
 		}
 
+		if (playerState.shootingAllyRobotIndex > -1 && robotIndex == playerState.shootingAllyRobotIndex)
+		{
+			Fire(robot);
+
+			{
+				game->GetClient().setAllyBulletData(-2);
+			}
+
+			break;
+		}
+
 		robotIndex++;
 	}
 }
 
-const POINT& GetFireDirectionFromClient()
+const POINT& GetFireDirectionFromClient(const bool isForAlly = false)
 {
 	PlayerState playerState;
 	SetPlayerDataFromClient(playerState);
 
 	POINT fireDirection;
-	fireDirection.x = playerState.fireDirection.x;
-	fireDirection.y = playerState.fireDirection.y;
+
+	if (isForAlly)
+	{
+		fireDirection.x = playerState.allyFireDirection.x;
+		fireDirection.y = playerState.allyFireDirection.y;
+	}
+	else
+	{
+		fireDirection.x = playerState.fireDirection.x;
+		fireDirection.y = playerState.fireDirection.y;
+	}
 
 	return fireDirection;
 }
@@ -878,11 +893,11 @@ void UpdateCharacters() {
 
 				int roll = rand() % 5;
 				// attack
-				if (roll == 0) 
+				if (roll == 0)
 				{
 					if (isSpectating)
 					{
-						robot->SetFireDirection(GetFireDirectionFromClient());
+						robot->SetFireDirection(GetFireDirectionFromClient(true));
 					}
 					else
 					{
@@ -891,9 +906,9 @@ void UpdateCharacters() {
 					}
 				}
 				// evade
-				else if (roll == 1) 
+				else if (roll == 1)
 				{
-				}	
+				}
 			}
 
 			robot->Update();
@@ -1413,8 +1428,17 @@ void Fire(Character *character, const int robotIndex)
 
 		if (!isSpectating && robotIndex > -1)
 		{
+			if (((Robot*)character)->GetControlStatus() == CS_AI)
 			{
-				game->GetClient().setBulletData(robotIndex, fireDirection.x, fireDirection.y);
+				{
+					game->GetClient().setAllyBulletData(robotIndex, fireDirection.x, fireDirection.y);
+				}
+			}
+			else
+			{
+				{
+					game->GetClient().setBulletData(robotIndex, fireDirection.x, fireDirection.y);
+				}
 			}
 		}
 	}

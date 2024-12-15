@@ -90,10 +90,9 @@ void GameServer::broadcastGameState()
     //Check bullet state
     for (const auto& player : players)
     {
-        const auto& client = player.first;
-        const auto& state = player.second;
+        const auto& previousState = player.second;
 
-        if (state.shootingRobotIndex == -2)
+        if (previousState.shootingRobotIndex == -2)
         {
             for (const auto& player : players)
             {
@@ -105,8 +104,20 @@ void GameServer::broadcastGameState()
 
                 players[clientKey] = state;
             }
+        }
 
-            break;
+        if (previousState.shootingAllyRobotIndex == -2)
+        {
+            for (const auto& player : players)
+            {
+                const auto& client = player.first;
+                auto state = player.second;
+                const auto& clientKey = std::make_pair(client.first, client.second);
+
+                state.shootingAllyRobotIndex = -1;
+
+                players[clientKey] = state;
+            }
         }
     }
 

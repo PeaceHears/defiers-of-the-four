@@ -21,6 +21,8 @@ struct PlayerState
 
     int shootingRobotIndex = -1;
     sf::Vector2f fireDirection;
+    int shootingAllyRobotIndex = -1;
+    sf::Vector2f allyFireDirection;
 
     int health = 0;
     int allyHealth = 0;
@@ -58,6 +60,7 @@ struct PlayerState
         packet << state.position.x << state.position.y << state.allyPosition.x << state.allyPosition.y
             << state.isSpectating <<
             state.shootingRobotIndex << state.fireDirection.x << state.fireDirection.y <<
+            state.shootingAllyRobotIndex << state.allyFireDirection.x << state.allyFireDirection.y <<
             state.health << state.allyHealth;
 
         return packet;
@@ -108,6 +111,7 @@ struct PlayerState
         packet >> state.position.x >> state.position.y >> state.allyPosition.x >> state.allyPosition.y
             >> state.isSpectating >>
             state.shootingRobotIndex >> state.fireDirection.x >> state.fireDirection.y >>
+            state.shootingAllyRobotIndex >> state.allyFireDirection.x >> state.allyFireDirection.y >>
             state.health >> state.allyHealth;
 
         return packet;
@@ -127,6 +131,8 @@ public:
     void setDemonData(const std::vector<DemonData>& demons);
     void setInGameData(const InGameData& inGameData);
     void setBulletData(const int shootingRobotIndex = -1, const int fireDirectionX = 0, const int fireDirectionY = 0);
+    void setAllyBulletData(const int shootingAllyRobotIndex = -1,
+        const int allyFireDirectionX = 0, const int allyFireDirectionY = 0);
     void setDataMutex(std::unordered_map<std::string, PlayerState>& gameState);
     void setSpectaterInfo(const bool isSpectating);
     void setGamerPlayerState(const std::unordered_map<std::string, PlayerState>& gameState, PlayerState& playerState);
