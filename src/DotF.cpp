@@ -221,37 +221,6 @@ void SetRobotsFromClient(Robot& robot)
 	}
 }
 
-void CheckFireFromClient()
-{
-	PlayerState playerState;
-	SetPlayerDataFromClient(playerState);
-
-	int robotIndex = 0;
-
-	for (const auto& robot : inGameRobots)
-	{
-		if (playerState.shootingRobotIndex > -1 && robotIndex == playerState.shootingRobotIndex)
-		{
-			Fire(robot);
-
-			game->GetClient().setBulletData(-2);
-
-			break;
-		}
-
-		if (playerState.shootingAllyRobotIndex > -1 && robotIndex == playerState.shootingAllyRobotIndex)
-		{
-			Fire(robot);
-
-			game->GetClient().setAllyBulletData(-2);
-
-			break;
-		}
-
-		robotIndex++;
-	}
-}
-
 const POINT& GetFireDirectionFromClient(const bool isForAlly = false)
 {
 	PlayerState playerState;
@@ -271,6 +240,39 @@ const POINT& GetFireDirectionFromClient(const bool isForAlly = false)
 	}
 
 	return fireDirection;
+}
+
+void CheckFireFromClient()
+{
+	PlayerState playerState;
+	SetPlayerDataFromClient(playerState);
+
+	int robotIndex = 0;
+
+	for (const auto& robot : inGameRobots)
+	{
+		if (playerState.shootingRobotIndex > -1 && robotIndex == playerState.shootingRobotIndex)
+		{
+			robot->SetFireDirection(GetFireDirectionFromClient());
+			Fire(robot);
+
+			game->GetClient().setBulletData(-2);
+
+			break;
+		}
+
+		if (playerState.shootingAllyRobotIndex > -1 && robotIndex == playerState.shootingAllyRobotIndex)
+		{
+			robot->SetFireDirection(GetFireDirectionFromClient(true));
+			Fire(robot);
+
+			game->GetClient().setAllyBulletData(-2);
+
+			break;
+		}
+
+		robotIndex++;
+	}
 }
 
 void SetDemonsFromClient(std::vector<DemonData>& demons)
