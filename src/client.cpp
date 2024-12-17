@@ -83,7 +83,7 @@ void GameClient::receiveGameState()
 
         if (isSpectating)
         {
-            sf::sleep(sf::milliseconds(2000));
+            //sf::sleep(sf::milliseconds(2000));
         }
 
         status = socket.receive(packet, sender, senderPort);
