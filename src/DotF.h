@@ -38,6 +38,8 @@
 
 #include "Globals.h"
 #include "client.h"
+#include "ClientRobotPrediction.h"
+#include "ClientRobotInterpolation.h"
 
 //-----------------------------------------------------------------
 // Forward Declarations
@@ -122,6 +124,10 @@ Scene		currentScene;
 string serverIPAddress;
 InGameData inGameData;
 Button* btnStart, *btnBackToPlayers2, *btnSpectate;
+sf::Clock deltaClock;
+sf::Clock updateClock;
+ClientRobotPrediction* clientRobotPrediction = nullptr;
+ClientRobotInterpolation* clientRobotInterpolation = nullptr;
 
 //-----------------------------------------------------------------
 // Game

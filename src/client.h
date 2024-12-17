@@ -137,6 +137,9 @@ public:
     void setSpectaterInfo(const bool isSpectating);
     void setGamerPlayerState(const std::unordered_map<std::string, PlayerState>& gameState, PlayerState& playerState);
 
+    const bool onLag() const { return isOnLag; }
+    const bool checkLagOnServer(const int msLimit);
+
 private:
     void sendInput();
     void receiveGameState();
@@ -147,6 +150,10 @@ private:
 
     std::atomic<bool> running; // Flag to control client thread execution
     std::mutex dataMutex;
+
+    sf::Clock pingClock;
+    sf::Clock pingClockForCheck;
+    bool isOnLag = false;
 
     std::string localPlayerId;
     PlayerState localPlayerState;

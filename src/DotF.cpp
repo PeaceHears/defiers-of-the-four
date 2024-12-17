@@ -100,6 +100,9 @@ void GameStart(HWND _hWindow)
 	// Create initial game elements
 	CreateButtons(hDC);
 	CreateRobots(hDC);
+
+	clientRobotPrediction = new ClientRobotPrediction();
+	clientRobotInterpolation = new ClientRobotInterpolation();
 }
 
 void GameEnd()
@@ -216,7 +219,10 @@ void SetRobotsFromClient(Robot& robot)
 
 		if (playerState.position.x != -1 || playerState.position.y != -1)
 		{
-			robot.GetSprite()->SetPosition(playerState.position.x, playerState.position.y);
+			if (!game->GetClient().onLag())
+			{
+				robot.GetSprite()->SetPosition(playerState.position.x, playerState.position.y);
+			}
 		}
 	}
 }
@@ -354,6 +360,34 @@ void UpdateDemonsFromClient()
 	SetInGameDemonsFromClient(localDemons);
 }
 
+void CheckPredictionAndInterpolation()
+{
+	const float deltaTime = deltaClock.restart().asSeconds();
+	const int msLimit = 1000;
+
+	if (game->GetClient().checkLagOnServer(msLimit))
+	{
+		PlayerState playerState;
+		SetPlayerDataFromClient(playerState);
+
+		sf::Vector2i serverPosition(playerState.position);
+		sf::Vector2i serverVelocity(rand() % 100 - 50, rand() % 100 - 50);  // Random velocity
+
+		clientRobotPrediction->OnServerUpdate(serverPosition, serverVelocity);
+		clientRobotInterpolation->OnServerUpdate(clientRobotPrediction->GetPredictedPosition());
+	}
+
+	// Update player (prediction and interpolation)
+	clientRobotPrediction->PredictPosition(deltaTime);
+	clientRobotInterpolation->InterpolatePosition(deltaTime);
+
+	if (game->GetClient().onLag())
+	{
+		const auto& currentPosition = clientRobotInterpolation->GetCurrentPosition();
+		inGameRobots[0]->GetSprite()->SetPosition(currentPosition.x, currentPosition.y);
+	}
+}
+
 #pragma endregion CLIENT 
 
 void GamePaint(HDC _hDC)
@@ -476,6 +510,7 @@ void GameCycle()
 
 			CheckFireFromClient();
 			UpdateDemonsFromClient();
+			CheckPredictionAndInterpolation();
 		}
 	}
 
@@ -1853,6 +1888,10 @@ void InitializeGameWorld()
 	{
 		inGameRobots[1]->SetControlStatus(CS_P2);
 	}
+
+	const auto& robotPosition = RectToPoint(inGameRobots[0]->GetSprite()->GetPosition());
+	clientRobotInterpolation->SetCurrentPosition(sf::Vector2i(robotPosition.x, robotPosition.y));
+	clientRobotInterpolation->SetTargetPosition(sf::Vector2i(robotPosition.x, robotPosition.y));
 
 	// Create map
 	for (size_t i = 0; i < NUM_MAP; i++)

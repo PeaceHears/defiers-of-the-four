@@ -74,6 +74,18 @@ void GameClient::receiveGameState()
             parseGameState(packet);
         }
 
+        const auto roundTripTime = pingClock.getElapsedTime();  // Measure round-trip time
+        const auto ping = roundTripTime.asMilliseconds();
+        std::cout << "Ping: " << ping << "ms" << std::endl;
+        pingClock.restart();
+        pingClockForCheck.restart();
+        isOnLag = false;
+
+        if (isSpectating)
+        {
+            sf::sleep(sf::milliseconds(2000));
+        }
+
         status = socket.receive(packet, sender, senderPort);
     }
 
@@ -124,6 +136,23 @@ void GameClient::parseGameState(sf::Packet& packet)
             }
         }
     }
+}
+
+const bool GameClient::checkLagOnServer(const int msLimit)
+{
+    const auto roundTripTime = pingClockForCheck.getElapsedTime();
+    const auto ping = roundTripTime.asMilliseconds();
+    const bool isThereLag = ping > msLimit;
+
+    if (isThereLag)
+    {
+        isOnLag = isThereLag;
+        std::cout << "LAG! Ping: " << ping << "ms" << std::endl;
+        pingClockForCheck.restart();
+        return true;
+    }
+
+    return false;
 }
 
 void GameClient::setMapData(const std::vector<std::vector<int>>& map)
