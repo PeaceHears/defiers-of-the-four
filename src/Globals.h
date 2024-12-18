@@ -10,6 +10,8 @@ struct InGameData
     int allyHealth = 0;
     POINT playerPosition;
     POINT allyPosition;
+    POINT velocity;
+    POINT allyVelocity;
 };
 
 struct DemonData

@@ -83,7 +83,7 @@ void GameClient::receiveGameState()
 
         if (isSpectating)
         {
-            //sf::sleep(sf::milliseconds(2000));
+            sf::sleep(sf::milliseconds(ms));
         }
 
         status = socket.receive(packet, sender, senderPort);
@@ -138,7 +138,7 @@ void GameClient::parseGameState(sf::Packet& packet)
     }
 }
 
-const bool GameClient::checkLagOnServer(const int msLimit)
+const bool GameClient::checkLagOnServer(const float msLimit)
 {
     const auto roundTripTime = pingClockForCheck.getElapsedTime();
     const auto ping = roundTripTime.asMilliseconds();
@@ -180,6 +180,8 @@ void GameClient::setInGameData(const InGameData& inGameData)
         localPlayerState.allyHealth = inGameData.allyHealth;
         localPlayerState.position = sf::Vector2i(inGameData.playerPosition.x, inGameData.playerPosition.y);
         localPlayerState.allyPosition = sf::Vector2i(inGameData.allyPosition.x, inGameData.allyPosition.y);
+        localPlayerState.velocity = sf::Vector2i(inGameData.velocity.x, inGameData.velocity.y);
+        localPlayerState.allyVelocity = sf::Vector2i(inGameData.allyVelocity.x, inGameData.allyVelocity.y);
     }
 }
 

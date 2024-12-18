@@ -10,7 +10,7 @@ ClientRobotInterpolation::~ClientRobotInterpolation()
 
 }
 
-void ClientRobotInterpolation::InterpolatePosition(const float deltaTime)
+void ClientRobotInterpolation::InterpolatePosition(const float deltaTime, const float updateInterval)
 {
     // Increment interpolation time
     interpolationTime += deltaTime;

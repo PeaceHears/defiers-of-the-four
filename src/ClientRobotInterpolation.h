@@ -8,7 +8,7 @@ public:
 	ClientRobotInterpolation();
 	~ClientRobotInterpolation();
 
-	void InterpolatePosition(const float deltaTime);
+	void InterpolatePosition(const float deltaTime, const float updateInterval);
 	void OnServerUpdate(const sf::Vector2i& newPosition);
 
 	void SetCurrentPosition(const sf::Vector2i& _currentPosition) { currentPosition = _currentPosition; }

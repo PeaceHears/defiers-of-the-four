@@ -150,6 +150,7 @@ wchar_t			textBuffer[1024];
 
 int demonId = 0;
 std::vector<DemonData> demons;
+POINT lastVelocity;
 
 //-----------------------------------------------------------------
 // Input contorls

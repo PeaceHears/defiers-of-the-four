@@ -142,11 +142,13 @@ void UpdateClientData()
 		{
 			inGameData.allyHealth = robotHealth;
 			inGameData.allyPosition = robotPosition;
+			inGameData.allyVelocity = lastVelocity; //TODO: Change to the exact value
 		}
 		else
 		{
 			inGameData.health = robotHealth;
 			inGameData.playerPosition = robotPosition;
+			inGameData.velocity = lastVelocity;
 		}
 
 		game->GetClient().setInGameData(inGameData);
@@ -363,7 +365,7 @@ void UpdateDemonsFromClient()
 void CheckPredictionAndInterpolation()
 {
 	const float deltaTime = deltaClock.restart().asSeconds();
-	const int msLimit = 1000;
+	const float msLimit = 1000;
 
 	if (game->GetClient().checkLagOnServer(msLimit))
 	{
@@ -371,15 +373,17 @@ void CheckPredictionAndInterpolation()
 		SetPlayerDataFromClient(playerState);
 
 		sf::Vector2i serverPosition(playerState.position);
-		sf::Vector2i serverVelocity(rand() % 100 - 50, rand() % 100 - 50);  // Random velocity
+		sf::Vector2i serverVelocity(playerState.velocity);
 
 		clientRobotPrediction->OnServerUpdate(serverPosition, serverVelocity);
-		clientRobotInterpolation->OnServerUpdate(clientRobotPrediction->GetPredictedPosition());
+
+		const auto& predictedPosition = clientRobotPrediction->GetPredictedPosition();
+		clientRobotInterpolation->OnServerUpdate(predictedPosition);
 	}
 
 	// Update player (prediction and interpolation)
 	clientRobotPrediction->PredictPosition(deltaTime);
-	clientRobotInterpolation->InterpolatePosition(deltaTime);
+	clientRobotInterpolation->InterpolatePosition(deltaTime, msLimit);
 
 	if (game->GetClient().onLag())
 	{
@@ -1174,9 +1178,15 @@ void Player1Controls()
 	}
 
 	// Slow down on diagonal, othersie diagonal moves are x2 faster than normal ones.
-	if (velocity.x != 0 && velocity.y != 0) {
+	if (velocity.x != 0 && velocity.y != 0) 
+	{
 		velocity.x = round(((float)velocity.x) / 1.4);
 		velocity.y = round(((float)velocity.y) / 1.4);
+	}
+
+	if (velocity.x != 0 || velocity.y != 0)
+	{
+		lastVelocity = velocity;
 	}
 
 	//velocity = CheckCollisionBeforeMoving(robot, velocity);

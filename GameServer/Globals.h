@@ -4,8 +4,12 @@
 struct InGameData
 {
     bool isSpectating = false;
+    int health = 0;
+    int allyHealth = 0;
     POINT playerPosition;
     POINT allyPosition;
+    POINT velocity;
+    POINT allyVelocity;
 };
 
 struct DemonData

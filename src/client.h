@@ -19,6 +19,9 @@ struct PlayerState
     sf::Vector2i position = sf::Vector2i(-1, -1);
     sf::Vector2i allyPosition = sf::Vector2i(-1, -1);
 
+    sf::Vector2i velocity = sf::Vector2i(-1, -1);
+    sf::Vector2i allyVelocity = sf::Vector2i(-1, -1);
+
     int shootingRobotIndex = -1;
     sf::Vector2i fireDirection = sf::Vector2i(-1, -1);
     int shootingAllyRobotIndex = -1;
@@ -57,8 +60,9 @@ struct PlayerState
         }
 
         // Serialize player robots values
-        packet << state.position.x << state.position.y << state.allyPosition.x << state.allyPosition.y
-            << state.isSpectating <<
+        packet << state.isSpectating << 
+            state.position.x << state.position.y << state.allyPosition.x << state.allyPosition.y <<
+            state.velocity.x << state.velocity.y << state.allyVelocity.x << state.allyVelocity.y <<
             state.shootingRobotIndex << state.fireDirection.x << state.fireDirection.y <<
             state.shootingAllyRobotIndex << state.allyFireDirection.x << state.allyFireDirection.y <<
             state.health << state.allyHealth;
@@ -108,8 +112,9 @@ struct PlayerState
             }
         }
 
-        packet >> state.position.x >> state.position.y >> state.allyPosition.x >> state.allyPosition.y
-            >> state.isSpectating >>
+        packet >> state.isSpectating >> 
+            state.position.x >> state.position.y >> state.allyPosition.x >> state.allyPosition.y >> 
+            state.velocity.x >> state.velocity.y >> state.allyVelocity.x >> state.allyVelocity.y >>
             state.shootingRobotIndex >> state.fireDirection.x >> state.fireDirection.y >>
             state.shootingAllyRobotIndex >> state.allyFireDirection.x >> state.allyFireDirection.y >>
             state.health >> state.allyHealth;
@@ -138,7 +143,9 @@ public:
     void setGamerPlayerState(const std::unordered_map<std::string, PlayerState>& gameState, PlayerState& playerState);
 
     const bool onLag() const { return isOnLag; }
-    const bool checkLagOnServer(const int msLimit);
+    const bool checkLagOnServer(const float msLimit);
+
+    void setMS(const int _ms) { ms = _ms; }
 
 private:
     void sendInput();
@@ -154,6 +161,7 @@ private:
     sf::Clock pingClock;
     sf::Clock pingClockForCheck;
     bool isOnLag = false;
+    int ms = 0;
 
     std::string localPlayerId;
     PlayerState localPlayerState;
