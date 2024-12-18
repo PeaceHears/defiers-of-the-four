@@ -123,11 +123,12 @@ Scene		currentScene;
 //-----------------------------------------------------------------
 string serverIPAddress;
 InGameData inGameData;
-Button* btnStart, *btnBackToPlayers2, *btnSpectate;
+Button* btnStart, *btnBackToPlayers2, *btnSpectate, *btnMS;
 sf::Clock deltaClock;
 sf::Clock updateClock;
 ClientRobotPrediction* clientRobotPrediction = nullptr;
 ClientRobotInterpolation* clientRobotInterpolation = nullptr;
+int ms = 0;
 
 //-----------------------------------------------------------------
 // Game

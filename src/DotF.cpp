@@ -485,6 +485,11 @@ void GamePaint(HDC _hDC)
 				}
 			}
 		}
+
+		if (isSpectating)
+		{
+			btnMS->Draw(_hDC);
+		}
 	}
 		break;
 	case GAME_PAUSE:
@@ -730,7 +735,7 @@ void MouseButtonUp(int _x, int _y, BOOL _isLeftClick)
 {
 	if (_isLeftClick) {
 		if (currentScene == MENU_MAIN || currentScene == MENU_SELECT_PLAYERS || 
-			currentScene == MENU_SELECT_ROBOTS || currentScene == MATCHMAKING) {
+			currentScene == MENU_SELECT_ROBOTS || currentScene == MATCHMAKING || currentScene == GAME_PLAY) {
 			HandleMenuButtonClick(_x, _y);
 		}
 
@@ -740,7 +745,7 @@ void MouseButtonUp(int _x, int _y, BOOL _isLeftClick)
 void MouseMove(int _x, int _y)
 {
 	if (currentScene == MENU_MAIN || currentScene == MENU_SELECT_PLAYERS || 
-		currentScene == MENU_SELECT_ROBOTS || currentScene == MATCHMAKING) {
+		currentScene == MENU_SELECT_ROBOTS || currentScene == MATCHMAKING || currentScene == GAME_PLAY) {
 		// Hover effect for menu
 		HandleMenuButtonHover(_x, _y);
 	}
@@ -2254,6 +2259,8 @@ void CreateButtons(HDC _hDC)
 	menuMatchmakingButtons.push_back(btnStart);
 	btnBackToPlayers2 = new Button(_hDC, (LPTSTR)TEXT("Back"), (RES_W / 2) - (BTN_WIDTH / 2), 700);
 	menuMatchmakingButtons.push_back(btnBackToPlayers2);
+
+	btnMS = new Button(_hDC, (LPTSTR)TEXT("MS"), 1023, 650);
 }
 
 //-----------------------------------------------------------------
@@ -2355,6 +2362,13 @@ void HandleMenuButtonClick(int _x, int _y)
 		if (btnBackToPlayers2->GetSprite()->IsPointInside(_x, _y)) {
 			PlaySound((LPCWSTR)IDW_MENU_CLICK_BACK, hInstance, SND_ASYNC | SND_RESOURCE);
 			currentScene = MENU_SELECT_PLAYERS;
+		}
+		break;
+	case GAME_PLAY:
+		if (btnMS->GetSprite()->IsPointInside(_x, _y))
+		{
+			ms += 10;
+			game->GetClient().setMS(ms);
 		}
 		break;
 	default:
@@ -2645,6 +2659,16 @@ void DrawRightMenu(HDC _hDC) {
 		SetTextColor(_hDC, UI_TEXT_COLOR);
 		SetBkColor(_hDC, UI_BG_COLOR);
 		game->PrintText(_hDC, ConvertString({ "-----------------------" }), secondarySize, bounds);
+	}
+	
+	if (isSpectating)
+	{
+		int msTextOffset = 500;
+		int msFontSize = 20;
+		RECT msTextBounds = { leftPos, msTextOffset, RES_W, msTextOffset + msFontSize };
+
+		swprintf(textBuffer, 150, L"MS: %d", ms);
+		game->PrintText(_hDC, textBuffer, msFontSize, msTextBounds);
 	}
 }
 
